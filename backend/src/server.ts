@@ -15,6 +15,8 @@ const env = validarConfiguracao();
 // Importado só depois da validação, porque a conexão com o banco lê o .env ao ser carregada.
 const { criarApp } = await import('./app.ts');
 
-criarApp().listen(env.PORT, () => {
+const app = criarApp({ urlFrontend: env.URL_FRONTEND, producao: env.NODE_ENV === 'production' });
+
+app.listen(env.PORT, () => {
   console.log(`API do Solar Gestão em http://localhost:${env.PORT}`);
 });

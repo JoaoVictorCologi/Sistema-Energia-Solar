@@ -9,6 +9,7 @@ vi.mock('../repositories/saudeRepository.ts', () => ({
 }));
 
 const verificarConexaoBancoSimulada = vi.mocked(verificarConexaoBanco);
+const app = criarApp({ urlFrontend: 'http://localhost:5173', producao: false });
 
 describe('GET /api/health', () => {
   beforeEach(() => {
@@ -18,7 +19,7 @@ describe('GET /api/health', () => {
   it('responde ok quando o banco responde', async () => {
     verificarConexaoBancoSimulada.mockResolvedValue();
 
-    const resposta = await request(criarApp()).get('/api/health');
+    const resposta = await request(app).get('/api/health');
 
     expect(resposta.status).toBe(200);
     expect(resposta.body).toEqual({ status: 'ok', banco: 'ok' });
@@ -27,7 +28,7 @@ describe('GET /api/health', () => {
   it('responde 503 sem detalhes internos quando o banco falha', async () => {
     verificarConexaoBancoSimulada.mockRejectedValue(new Error('connect ECONNREFUSED 127.0.0.1:5432'));
 
-    const resposta = await request(criarApp()).get('/api/health');
+    const resposta = await request(app).get('/api/health');
 
     expect(resposta.status).toBe(503);
     expect(resposta.body).toEqual({ status: 'erro', banco: 'erro' });

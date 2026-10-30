@@ -7,6 +7,8 @@ const esquemaEnv = z.object({
     protocol: /^postgres(ql)?$/,
     error: 'obrigatória, no formato postgres://usuario:senha@host:5432/banco',
   }),
+  // Única origem aceita pelo CORS: o site React.
+  URL_FRONTEND: z.url({ error: 'precisa ser uma URL, por exemplo http://localhost:5173' }).default('http://localhost:5173'),
 });
 
 export type Env = z.infer<typeof esquemaEnv>;
