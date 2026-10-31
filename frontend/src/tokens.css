@@ -1,0 +1,83 @@
+/*
+ * Identidade visual Don Energy — tokens extraídos do site institucional (Next.js).
+ * Feito para Tailwind CSS 4: importar depois de `@import "tailwindcss";`.
+ * Gera as classes bg-brand-*, text-brand-*, font-heading etc. e os componentes site-*.
+ * Guia completo: docs/arquitetura/identidade-visual.md.
+ */
+
+@theme {
+  /* Cores de marca (usadas no site). */
+  --color-brand-blue: #384c96;
+  --color-brand-orange: #d88739;
+  --color-brand-green: #94b94a;
+  --color-brand-ink: #171f32;
+
+  /* Azul profundo de apoio: header sólido, rodapé e faixas de chamada. */
+  --color-brand-deep: #182447;
+  --color-brand-blue-header: #182447;
+  --color-brand-soft: #f5f6fa;
+
+  /* Cores da arte original da logo; só para peças que reproduzem a logo. */
+  --color-logo-orange: #f68b39;
+  --color-logo-blue: #1e55a6;
+
+  /* Texto e superfícies neutras. */
+  --color-background: #ffffff;
+  --color-foreground: #171f32;
+  --color-muted-foreground: #535c6d;
+  --color-border: #d9dde6;
+
+  /* Sora e Inter carregadas do Google Fonts (ver README). */
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-heading: "Sora", ui-sans-serif, system-ui, sans-serif;
+
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.625rem;
+  --radius-xl: 0.875rem;
+}
+
+:root {
+  /* Altura compartilhada entre header, primeira dobra e âncoras: 64 px; 72 px a partir de 768 px. */
+  --header-py: 0.5rem;
+  --header-logo-size: 3rem;
+  --header-height: calc(var(--header-py) * 2 + var(--header-logo-size));
+}
+
+@media (min-width: 768px) {
+  :root { --header-logo-size: 3.5rem; }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    @apply font-sans antialiased;
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Foco visível em todo elemento interativo, na cor do texto do próprio elemento. */
+:where(a, button, input, select, textarea, summary, [role="checkbox"], [role="radio"]):focus-visible {
+  outline: 3px solid currentColor;
+  outline-offset: 4px;
+}
+
+@layer components {
+  .site-shell { @apply mx-auto w-full max-w-[1200px] px-6 md:px-10; }
+  .site-section { @apply py-20 md:py-24; }
+  .site-eyebrow { @apply mb-5 text-xs font-semibold tracking-[0.13em] text-brand-blue uppercase; }
+  .site-title { @apply max-w-3xl font-heading text-3xl leading-[1.22] font-medium tracking-[-0.035em] text-brand-blue md:text-[2.5rem]; }
+  .site-link { @apply inline-flex min-h-11 items-center gap-4 text-sm font-semibold text-brand-blue underline-offset-8 hover:underline; }
+  /* Laranja com texto escuro: branco sobre o laranja não passa no contraste (2,8:1). */
+  .site-button { @apply inline-flex min-h-12 items-center justify-center gap-5 rounded-sm bg-brand-orange px-6 py-3 text-sm font-semibold text-brand-ink hover:bg-brand-orange/90; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { transition-duration: 0.01ms !important; }
+}
