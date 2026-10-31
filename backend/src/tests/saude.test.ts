@@ -9,7 +9,7 @@ vi.mock('../repositories/saudeRepository.ts', () => ({
 }));
 
 const verificarConexaoBancoSimulada = vi.mocked(verificarConexaoBanco);
-const app = criarApp({ urlFrontend: 'http://localhost:5173', producao: false });
+const app = criarApp();
 
 describe('GET /api/health', () => {
   beforeEach(() => {

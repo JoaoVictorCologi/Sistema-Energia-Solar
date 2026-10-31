@@ -3,35 +3,45 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { ErroDeConfiguracao, lerEnv } from '../config/env.ts';
 
-const URL_VALIDA = 'postgres://usuario:senha@localhost:5432/solar_gestao';
+const ENV_MINIMO = {
+  DATABASE_URL: 'postgres://usuario:senha@localhost:5432/solar_gestao',
+  JWT_SECRET: 'um-segredo-qualquer-com-mais-de-32-caracteres',
+};
 
 describe('lerEnv', () => {
-  it('aceita um .env só com DATABASE_URL e preenche os padrões', () => {
-    const env = lerEnv({ DATABASE_URL: URL_VALIDA });
+  it('aceita um .env só com as obrigatórias e preenche os padrões', () => {
+    const env = lerEnv(ENV_MINIMO);
 
     expect(env).toEqual({
+      ...ENV_MINIMO,
       NODE_ENV: 'development',
       PORT: 3333,
-      DATABASE_URL: URL_VALIDA,
       URL_FRONTEND: 'http://localhost:5173',
     });
   });
 
-  it('recusa URL_FRONTEND que não é URL', () => {
-    expect(() => lerEnv({ DATABASE_URL: URL_VALIDA, URL_FRONTEND: 'meu-site' })).toThrow(/URL_FRONTEND/);
-  });
-
   it('recusa a falta de DATABASE_URL com mensagem que cita a variável', () => {
-    expect(() => lerEnv({})).toThrow(ErroDeConfiguracao);
-    expect(() => lerEnv({})).toThrow(/DATABASE_URL: obrigatória/);
+    const semBanco = { JWT_SECRET: ENV_MINIMO.JWT_SECRET };
+
+    expect(() => lerEnv(semBanco)).toThrow(ErroDeConfiguracao);
+    expect(() => lerEnv(semBanco)).toThrow(/DATABASE_URL: obrigatória/);
   });
 
   it('recusa DATABASE_URL que não é do PostgreSQL', () => {
-    expect(() => lerEnv({ DATABASE_URL: 'mysql://usuario:senha@localhost/banco' })).toThrow(/DATABASE_URL/);
+    expect(() => lerEnv({ ...ENV_MINIMO, DATABASE_URL: 'mysql://usuario:senha@localhost/banco' })).toThrow(/DATABASE_URL/);
   });
 
   it('recusa porta que não é número', () => {
-    expect(() => lerEnv({ DATABASE_URL: URL_VALIDA, PORT: 'abc' })).toThrow(/PORT/);
+    expect(() => lerEnv({ ...ENV_MINIMO, PORT: 'abc' })).toThrow(/PORT/);
+  });
+
+  it('recusa URL_FRONTEND que não é URL', () => {
+    expect(() => lerEnv({ ...ENV_MINIMO, URL_FRONTEND: 'meu-site' })).toThrow(/URL_FRONTEND/);
+  });
+
+  it('exige JWT_SECRET com pelo menos 32 caracteres', () => {
+    expect(() => lerEnv({ DATABASE_URL: ENV_MINIMO.DATABASE_URL })).toThrow(/JWT_SECRET: obrigatório/);
+    expect(() => lerEnv({ ...ENV_MINIMO, JWT_SECRET: 'curto' })).toThrow(/JWT_SECRET: precisa ter pelo menos 32/);
   });
 });
 
@@ -40,7 +50,7 @@ describe('inicialização do servidor', () => {
     const servidor = path.join(import.meta.dirname, '..', 'server.ts');
 
     const execucao = spawnSync(process.execPath, [servidor], {
-      env: { PATH: process.env.PATH },
+      env: { PATH: process.env.PATH, JWT_SECRET: ENV_MINIMO.JWT_SECRET },
       encoding: 'utf8',
       timeout: 10_000,
     });

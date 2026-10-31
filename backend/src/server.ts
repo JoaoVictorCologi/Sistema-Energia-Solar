@@ -1,8 +1,8 @@
-import { ErroDeConfiguracao, lerEnv, type Env } from './config/env.ts';
+import { ErroDeConfiguracao, obterEnv, type Env } from './config/env.ts';
 
 function validarConfiguracao(): Env {
   try {
-    return lerEnv(process.env);
+    return obterEnv();
   } catch (erro) {
     if (!(erro instanceof ErroDeConfiguracao)) throw erro;
     console.error(erro.message);
@@ -15,8 +15,6 @@ const env = validarConfiguracao();
 // Importado só depois da validação, porque a conexão com o banco lê o .env ao ser carregada.
 const { criarApp } = await import('./app.ts');
 
-const app = criarApp({ urlFrontend: env.URL_FRONTEND, producao: env.NODE_ENV === 'production' });
-
-app.listen(env.PORT, () => {
+criarApp().listen(env.PORT, () => {
   console.log(`API do Solar Gestão em http://localhost:${env.PORT}`);
 });

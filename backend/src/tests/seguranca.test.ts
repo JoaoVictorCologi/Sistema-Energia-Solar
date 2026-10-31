@@ -12,7 +12,7 @@ vi.mock('../repositories/saudeRepository.ts', () => ({
 }));
 
 const URL_FRONTEND = 'http://localhost:5173';
-const app = criarApp({ urlFrontend: URL_FRONTEND, producao: false });
+const app = criarApp();
 
 // App mínimo para testar um middleware isolado, com o mesmo tratador de erros da API.
 function criarAppDeTeste(...middlewares: RequestHandler[]): Express {

@@ -1,12 +1,10 @@
 import path from 'node:path';
 import type { Knex } from 'knex';
-import { lerEnv } from './src/config/env.ts';
-
-const env = lerEnv(process.env);
+import { obterEnv } from './src/config/env.ts';
 
 const configuracao: Knex.Config = {
   client: 'pg',
-  connection: env.DATABASE_URL,
+  connection: obterEnv().DATABASE_URL,
   migrations: {
     // Pastas de migrations: o núcleo primeiro; cada módulo (Plano 2 em diante) acrescenta uma linha com a sua.
     directory: [
