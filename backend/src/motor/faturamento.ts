@@ -25,6 +25,7 @@ export interface EntradaDeCompensacao {
 
 export interface ResultadoDaCompensacao {
   energiaCompensada: Kwh;
+  creditosNoFimDoMes: Kwh;
   creditosVencidos: Kwh;
   faturaComSolar: Reais;
   parcelaFioB: Reais;
@@ -71,6 +72,11 @@ function consumirCreditos(lotes: LoteDeCredito[], injecao: Kwh, compensada: Kwh,
   let falta = compensada.minus(Decimal.min(injecao, compensada));
   const restantes: LoteDeCredito[] = [];
   for (const lote of [...lotes].sort((a, b) => a.mesDeOrigem - b.mesDeOrigem)) {
+    // Lote que não é tocado neste mês segue igual, sem conta (são até 60 lotes por mês, por 300 meses).
+    if (falta.isZero()) {
+      restantes.push(lote);
+      continue;
+    }
     const usado = Decimal.min(lote.energia, falta);
     falta = falta.minus(usado);
     if (lote.energia.gt(usado)) restantes.push({ mesDeOrigem: lote.mesDeOrigem, energia: kwh(lote.energia.minus(usado)) });
@@ -97,6 +103,7 @@ export function compensarMes(entrada: EntradaDeCompensacao, creditosAnteriores: 
   const energiaCompensada = energiaACompensar(entrada, disponivel);
   return {
     energiaCompensada,
+    creditosNoFimDoMes: kwh(disponivel.minus(energiaCompensada)),
     creditosVencidos: vencidos,
     ...faturar(entrada, energiaCompensada),
     creditos: consumirCreditos(validos, entrada.injecao, energiaCompensada, entrada.mes),
@@ -118,7 +125,7 @@ export function faturarMes(entrada: EntradaMes, creditosAnteriores: LoteDeCredit
       injecao,
       consumoDaRede,
       energiaCompensada: compensacao.energiaCompensada,
-      creditosNoFimDoMes: kwh(Decimal.sum(ZERO, ...compensacao.creditos.map((lote) => lote.energia))),
+      creditosNoFimDoMes: compensacao.creditosNoFimDoMes,
       creditosVencidos: compensacao.creditosVencidos,
       faturaSemSolar,
       faturaComSolar: compensacao.faturaComSolar,
