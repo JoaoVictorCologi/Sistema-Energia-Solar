@@ -9,6 +9,7 @@ const configuracao: Knex.Config = {
     // Pastas de migrations: o núcleo primeiro; cada módulo (Plano 2 em diante) acrescenta uma linha com a sua.
     directory: [
       path.join(import.meta.dirname, 'migrations'),
+      path.join(import.meta.dirname, 'src', 'modulos', 'usinas', 'migrations'),
     ],
     extension: 'ts',
     loadExtensions: ['.ts'],
