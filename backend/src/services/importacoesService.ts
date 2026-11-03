@@ -9,6 +9,8 @@ import {
 
 // Execução que passou disso sem terminar (servidor reiniciado no meio) deixa de bloquear a próxima.
 const TEMPO_MAXIMO_DE_EXECUCAO_MS = 30 * 60_000;
+// Sem importação bem-sucedida há mais de 2 dias, a tela de importações avisa que o dado pode estar velho.
+const PRAZO_PARA_DESATUALIZADA_MS = 2 * 24 * 60 * 60_000;
 
 export interface SituacaoDaImportacao {
   tipo: string;
@@ -16,6 +18,7 @@ export interface SituacaoDaImportacao {
   agenda: string;
   ultimaExecucao: ImportacaoResumo | null;
   ultimoSucessoEm: Date | null;
+  desatualizada: boolean;
 }
 
 // Erros previstos (fonte fora do ar, dado recusado) vão para a tela; o resto fica só no log do servidor.
@@ -45,15 +48,19 @@ export async function registrarImportacao(job: JobDeImportacao, agora = new Date
   }
 }
 
-export async function listarSituacaoDasImportacoes(): Promise<SituacaoDaImportacao[]> {
+export async function listarSituacaoDasImportacoes(agora = new Date()): Promise<SituacaoDaImportacao[]> {
   const [ultimas, ultimosSucessos] = await Promise.all([listarUltimasImportacoes(), listarUltimasImportacoes(['sucesso', 'sem_alteracao'])]);
-  return listarJobs().map(({ tipo, descricao, agenda }) => ({
-    tipo,
-    descricao,
-    agenda,
-    ultimaExecucao: ultimas.find((importacao) => importacao.tipo === tipo) ?? null,
-    ultimoSucessoEm: ultimosSucessos.find((importacao) => importacao.tipo === tipo)?.finalizada_em ?? null,
-  }));
+  return listarJobs().map(({ tipo, descricao, agenda }) => {
+    const ultimoSucessoEm = ultimosSucessos.find((importacao) => importacao.tipo === tipo)?.finalizada_em ?? null;
+    return {
+      tipo,
+      descricao,
+      agenda,
+      ultimaExecucao: ultimas.find((importacao) => importacao.tipo === tipo) ?? null,
+      ultimoSucessoEm,
+      desatualizada: !ultimoSucessoEm || agora.getTime() - new Date(ultimoSucessoEm).getTime() > PRAZO_PARA_DESATUALIZADA_MS,
+    };
+  });
 }
 
 export async function executarImportacaoAgora(tipo: string): Promise<ImportacaoResumo> {

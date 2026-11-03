@@ -17,7 +17,8 @@
     "criar-admin": "node --env-file-if-exists=.env scripts/criar-admin.ts",
     "carregar-municipios": "node --env-file-if-exists=.env scripts/carregar-municipios.ts",
     "carregar-atlas": "node --env-file-if-exists=.env scripts/carregar-atlas.ts",
-    "importar": "node --env-file-if-exists=.env scripts/importar.ts"
+    "importar": "node --env-file-if-exists=.env scripts/importar.ts",
+    "dados-demo": "node --env-file-if-exists=.env scripts/dados-demo.ts"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",

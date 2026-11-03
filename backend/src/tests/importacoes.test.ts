@@ -6,6 +6,7 @@ import type { JobDeImportacao } from '../jobs/tipos.ts';
 import {
   existeImportacaoEmAndamento, finalizarImportacao, iniciarImportacao, listarUltimasImportacoes, type ImportacaoResumo,
 } from '../repositories/importacoesRepository.ts';
+import { listarSituacaoDasImportacoes } from '../services/importacoesService.ts';
 import { gerarToken } from '../services/authService.ts';
 
 vi.mock('../repositories/importacoesRepository.ts', () => ({
@@ -76,8 +77,9 @@ describe('GET /api/admin/importacoes', () => {
         linhasGravadas: 0, mensagem: 'dadosabertos.aneel.gov.br não respondeu',
       },
       ultimoSucessoEm: INICIO.toISOString(),
+      desatualizada: expect.any(Boolean),
     });
-    expect(resposta.body.importacoes[2]).toMatchObject({ tipo: 'modulo-teste', ultimaExecucao: null, ultimoSucessoEm: null });
+    expect(resposta.body.importacoes[2]).toMatchObject({ tipo: 'modulo-teste', ultimaExecucao: null, ultimoSucessoEm: null, desatualizada: true });
   });
 });
 
@@ -129,5 +131,20 @@ describe('POST /api/admin/importacoes/:tipo', () => {
     expect(resposta.status).toBe(404);
     expect(resposta.body.error.code).toBe('IMPORTACAO_DESCONHECIDA');
     expect(iniciarImportacao).not.toHaveBeenCalled();
+  });
+});
+
+describe('aviso de importação desatualizada', () => {
+  const DIA_MS = 24 * 60 * 60_000;
+
+  it('avisa quando o último sucesso tem mais de 2 dias, ou quando nunca houve sucesso', async () => {
+    vi.mocked(listarUltimasImportacoes).mockResolvedValue([importacao({ tipo: 'aneel-tarifas', status: 'sucesso' })]);
+
+    const umDiaDepois = await listarSituacaoDasImportacoes(new Date(INICIO.getTime() + DIA_MS));
+    const tresDiasDepois = await listarSituacaoDasImportacoes(new Date(INICIO.getTime() + 3 * DIA_MS));
+
+    expect(umDiaDepois.find((item) => item.tipo === 'aneel-tarifas')?.desatualizada).toBe(false);
+    expect(tresDiasDepois.find((item) => item.tipo === 'aneel-tarifas')?.desatualizada).toBe(true);
+    expect(umDiaDepois.find((item) => item.tipo === 'bcb-indicadores')?.desatualizada).toBe(true);
   });
 });
