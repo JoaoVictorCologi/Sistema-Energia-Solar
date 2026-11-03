@@ -1,0 +1,87 @@
+{
+ "success": true,
+ "result": {
+  "records": [
+   {
+    "_id": 526986,
+    "DatInicioVigencia": "2025-05-22",
+    "DatFimVigencia": "2025-12-31",
+    "DscSubGrupo": "B1",
+    "DscClasse": "Residencial",
+    "DscSubClasse": "Residencial",
+    "DscUnidadeTerciaria": "MWh",
+    "VlrTUSD": "442,66",
+    "VlrTE": "246,05",
+    "SigAgente": "CPFL Santa Cruz",
+    "NumCNPJDistribuidora": "53859112000169"
+   },
+   {
+    "_id": 527040,
+    "DatInicioVigencia": "2025-05-22",
+    "DatFimVigencia": "2025-12-31",
+    "DscSubGrupo": "B2",
+    "DscClasse": "Rural",
+    "DscSubClasse": "Não se aplica",
+    "DscUnidadeTerciaria": "MWh",
+    "VlrTUSD": "442,66",
+    "VlrTE": "246,05",
+    "SigAgente": "CPFL Santa Cruz",
+    "NumCNPJDistribuidora": "53859112000169"
+   },
+   {
+    "_id": 527083,
+    "DatInicioVigencia": "2025-05-22",
+    "DatFimVigencia": "2025-12-31",
+    "DscSubGrupo": "B3",
+    "DscClasse": "Não se aplica",
+    "DscSubClasse": "Não se aplica",
+    "DscUnidadeTerciaria": "MWh",
+    "VlrTUSD": "442,66",
+    "VlrTE": "246,05",
+    "SigAgente": "CPFL Santa Cruz",
+    "NumCNPJDistribuidora": "53859112000169"
+   },
+   {
+    "_id": 617223,
+    "DatInicioVigencia": "2026-04-22",
+    "DatFimVigencia": "2027-04-21",
+    "DscSubGrupo": "B1",
+    "DscClasse": "Residencial",
+    "DscSubClasse": "Residencial",
+    "DscUnidadeTerciaria": "MWh",
+    "VlrTUSD": "560,39",
+    "VlrTE": "252,19",
+    "SigAgente": "CPFL Santa Cruz",
+    "NumCNPJDistribuidora": "53859112000169"
+   },
+   {
+    "_id": 617294,
+    "DatInicioVigencia": "2026-04-22",
+    "DatFimVigencia": "2027-04-21",
+    "DscSubGrupo": "B2",
+    "DscClasse": "Rural",
+    "DscSubClasse": "Não se aplica",
+    "DscUnidadeTerciaria": "MWh",
+    "VlrTUSD": "560,39",
+    "VlrTE": "252,19",
+    "SigAgente": "CPFL Santa Cruz",
+    "NumCNPJDistribuidora": "53859112000169"
+   },
+   {
+    "_id": 617334,
+    "DatInicioVigencia": "2026-04-22",
+    "DatFimVigencia": "2027-04-21",
+    "DscSubGrupo": "B3",
+    "DscClasse": "Não se aplica",
+    "DscSubClasse": "Não se aplica",
+    "DscUnidadeTerciaria": "MWh",
+    "VlrTUSD": "560,39",
+    "VlrTE": "252,19",
+    "SigAgente": "CPFL Santa Cruz",
+    "NumCNPJDistribuidora": "53859112000169"
+   }
+  ],
+  "limit": 1000,
+  "total": 6
+ }
+}

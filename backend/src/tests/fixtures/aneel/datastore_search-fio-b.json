@@ -1,0 +1,39 @@
+{
+ "success": true,
+ "result": {
+  "records": [
+   {
+    "_id": 173379,
+    "SigNomeAgente": "CPFL Santa Cruz",
+    "DatInicioVigencia": "2026-04-22",
+    "DscSubGrupoTarifario": "B1",
+    "DscClasseConsumidor": "Residencial",
+    "DscSubClasseConsumidor": "Residencial",
+    "DscUnidade": "R$/MWh",
+    "VlrComponenteTarifario": "272,85321113800001"
+   },
+   {
+    "_id": 213264,
+    "SigNomeAgente": "CPFL Santa Cruz",
+    "DatInicioVigencia": "2026-04-22",
+    "DscSubGrupoTarifario": "B3",
+    "DscClasseConsumidor": "Não se aplica",
+    "DscSubClasseConsumidor": "Não se aplica",
+    "DscUnidade": "R$/MWh",
+    "VlrComponenteTarifario": "272,85321113800001"
+   },
+   {
+    "_id": 281433,
+    "SigNomeAgente": "CPFL Santa Cruz",
+    "DatInicioVigencia": "2026-04-22",
+    "DscSubGrupoTarifario": "B2",
+    "DscClasseConsumidor": "Rural",
+    "DscSubClasseConsumidor": "Não se aplica",
+    "DscUnidade": "R$/MWh",
+    "VlrComponenteTarifario": "272,85321113800001"
+   }
+  ],
+  "limit": 1000,
+  "total": 3
+ }
+}

@@ -1,0 +1,33 @@
+# Blueprint do Render (Plano 1, tarefa 16): banco PostgreSQL e um serviço web com a API e o site na mesma origem.
+# No painel do Render: New > Blueprint, escolha este repositório. Roteiro completo em docs/arquitetura/backend.md.
+databases:
+  - name: solar-gestao-banco
+    databaseName: solar_gestao
+    user: solar_app
+    plan: free
+    region: virginia
+    # Mesma versão principal do banco local, para o pg_dump funcionar nos dois sentidos.
+    postgresMajorVersion: "18"
+
+services:
+  - type: web
+    name: solar-gestao
+    runtime: node
+    plan: free
+    region: virginia
+    # --include=dev: o build precisa do TypeScript e do Vite, que são dependências de desenvolvimento.
+    buildCommand: cd frontend && npm ci --include=dev && npm run build && cd ../backend && npm ci --include=dev && npm run build
+    # Aplica as migrations pendentes a cada deploy, antes de subir a API (que também entrega o site).
+    startCommand: cd backend && npm run db:migrate && npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: "22"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: solar-gestao-banco
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
