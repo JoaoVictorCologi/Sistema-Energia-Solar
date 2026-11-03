@@ -10,7 +10,8 @@
     "DscClasseConsumidor": "Residencial",
     "DscSubClasseConsumidor": "Residencial",
     "DscUnidade": "R$/MWh",
-    "VlrComponenteTarifario": "272,85321113800001"
+    "VlrComponenteTarifario": "272,85321113800001",
+    "NumCPFCNPJ": "53859112000169"
    },
    {
     "_id": 213264,
@@ -20,7 +21,8 @@
     "DscClasseConsumidor": "Não se aplica",
     "DscSubClasseConsumidor": "Não se aplica",
     "DscUnidade": "R$/MWh",
-    "VlrComponenteTarifario": "272,85321113800001"
+    "VlrComponenteTarifario": "272,85321113800001",
+    "NumCPFCNPJ": "53859112000169"
    },
    {
     "_id": 281433,
@@ -30,7 +32,8 @@
     "DscClasseConsumidor": "Rural",
     "DscSubClasseConsumidor": "Não se aplica",
     "DscUnidade": "R$/MWh",
-    "VlrComponenteTarifario": "272,85321113800001"
+    "VlrComponenteTarifario": "272,85321113800001",
+    "NumCPFCNPJ": "53859112000169"
    }
   ],
   "limit": 1000,
