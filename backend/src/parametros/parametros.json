@@ -34,7 +34,7 @@
   "custoReferenciaPorKwp": "4000.00",
   "fontes": {
     "uf": "Mococa-SP, sede da empresa. A confirmar com a equipe.",
-    "distribuidoraPadrao": "CPFL Santa Cruz (incorporou a CPFL Mococa). A confirmar com a equipe e com o SigAgente da ANEEL na tarefa 6.",
+    "distribuidoraPadrao": "SigAgente exato da ANEEL. A CPFL Santa Cruz (CNPJ 53.859.112/0001-69) atende Mococa desde 22/03/2018, quando incorporou a CPFL Mococa (conferido na API da ANEEL em 03/11/2026).",
     "fioBPercentualPorAno": "Lei 14.300/2022, art. 27. De 2029 em diante depende da valoração da ANEEL: cenário conservador de 100%, aplicado a todos os anos seguintes.",
     "consumoMinimoKwh": "REN ANEEL 1.000/2021 (custo de disponibilidade).",
     "impostos": "ICMS de SP sobre energia residencial: 12% até 200 kWh por mês e 18% acima (RICMS/SP, art. 52, com o limite da ADI 7112). PIS e COFINS variam por mês e por distribuidora: valores ilustrativos, a calibrar com as contas reais.",

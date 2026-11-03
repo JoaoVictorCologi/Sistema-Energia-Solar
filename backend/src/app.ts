@@ -6,6 +6,7 @@ import { obterEnv } from './config/env.ts';
 import { rotaNaoEncontrada, tratarErros } from './middlewares/erros.ts';
 import { routersDosModulos } from './modulos/index.ts';
 import { criarRotasAuth } from './routes/auth.ts';
+import { rotasImportacoes } from './routes/importacoes.ts';
 import { rotasSaude } from './routes/saude.ts';
 
 function criarRotasDaApi(): Router {
@@ -13,6 +14,7 @@ function criarRotasDaApi(): Router {
 
   api.use(rotasSaude);
   api.use(criarRotasAuth());
+  api.use(rotasImportacoes);
   for (const routerDoModulo of routersDosModulos) {
     api.use(routerDoModulo);
   }

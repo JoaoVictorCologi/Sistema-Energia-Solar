@@ -1,0 +1,29 @@
+{
+ "success": true,
+ "result": {
+  "name": "componentes-tarifarias",
+  "resources": [
+   {
+    "id": "a4060165-3a0c-404f-926c-83901088b67c",
+    "name": "componentes-tarifarias-2025.csv",
+    "format": "CSV",
+    "datastore_active": true,
+    "last_modified": "2026-10-13T05:21:40.395971"
+   },
+   {
+    "id": "e8717aa8-2521-453f-bf16-fbb9a16eea39",
+    "name": "componentes-tarifarias-2026.csv",
+    "format": "CSV",
+    "datastore_active": true,
+    "last_modified": "2026-11-02T08:24:31.536556"
+   },
+   {
+    "id": "59c32c89-8e86-4122-a7cf-a0d5fa9d0ff5",
+    "name": "componentes-tarifarias-2026.parquet",
+    "format": "PARQUET",
+    "datastore_active": false,
+    "last_modified": "2026-11-02T08:33:45.028278"
+   }
+  ]
+ }
+}

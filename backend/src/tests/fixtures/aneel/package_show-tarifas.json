@@ -1,0 +1,29 @@
+{
+ "success": true,
+ "result": {
+  "name": "tarifas-distribuidoras-energia-eletrica",
+  "resources": [
+   {
+    "id": "2d3478e0-8aa0-4cd4-81a7-5f8967cd8804",
+    "name": "Dicionário de dados",
+    "format": "PDF",
+    "datastore_active": false,
+    "last_modified": "2026-06-12T17:12:03.238164"
+   },
+   {
+    "id": "fcf2906c-7c32-4b9b-a637-054e7a5234f4",
+    "name": "tarifas-homologadas-distribuidoras-energia-eletrica.csv",
+    "format": "CSV",
+    "datastore_active": true,
+    "last_modified": "2026-11-02T11:07:53.210106"
+   },
+   {
+    "id": "9af99ef4-376a-4493-a075-5e48ab4da51b",
+    "name": "tarifas-homologadas-distribuidoras-energia-eletrica.parquet",
+    "format": "PARQUET",
+    "datastore_active": false,
+    "last_modified": "2026-11-02T11:08:00.286536"
+   }
+  ]
+ }
+}

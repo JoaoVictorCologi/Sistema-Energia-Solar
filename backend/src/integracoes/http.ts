@@ -1,7 +1,15 @@
 // Chamada HTTP comum a todas as integrações (IBGE, ViaCEP, ANEEL, Banco Central):
 // timeout em cada tentativa e no máximo 3 tentativas (AGENTS.md, regra obrigatória 10).
 
-export class ErroDeIntegracao extends Error {}
+export class ErroDeIntegracao extends Error {
+  // Status HTTP da última resposta, quando houve resposta (o Banco Central usa 404 para "sem dados no período").
+  readonly status: number | undefined;
+
+  constructor(mensagem: string, status?: number) {
+    super(mensagem);
+    this.status = status;
+  }
+}
 
 export interface OpcoesDaRequisicao {
   metodo?: 'GET' | 'POST';
@@ -37,12 +45,14 @@ export async function buscarJson(url: string, opcoes: OpcoesDaRequisicao = {}): 
   const espera = opcoes.esperaEntreTentativasMs ?? 1_000;
   const { hostname } = new URL(url);
   let motivo = '';
+  let status: number | undefined;
 
   for (let tentativa = 1; tentativa <= tentativas; tentativa++) {
     if (tentativa > 1) await new Promise((resolver) => setTimeout(resolver, espera * (tentativa - 1)));
     try {
       const resposta = await tentarUmaVez(url, opcoes);
       if (resposta.ok) return await resposta.json();
+      status = resposta.status;
       motivo = `HTTP ${resposta.status}`;
       if (!valeAPenaRepetir(resposta.status)) break;
     } catch (erro) {
@@ -50,5 +60,5 @@ export async function buscarJson(url: string, opcoes: OpcoesDaRequisicao = {}): 
       if (erro instanceof SyntaxError) break;
     }
   }
-  throw new ErroDeIntegracao(`${hostname} não respondeu como esperado (${motivo}).`);
+  throw new ErroDeIntegracao(`${hostname} não respondeu como esperado (${motivo}).`, status);
 }
