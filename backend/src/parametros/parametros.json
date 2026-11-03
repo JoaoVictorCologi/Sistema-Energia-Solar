@@ -1,7 +1,9 @@
 {
   "versao": "2026-11-03",
-  "uf": "SP",
-  "distribuidoraPadrao": "CPFL Santa Cruz",
+  "distribuidoraDaCalibracao": {
+    "cnpj": "53859112000169",
+    "sigla": "CPFL Santa Cruz"
+  },
   "fioBPercentualPorAno": {
     "2023": "0.15",
     "2024": "0.30",
@@ -57,8 +59,7 @@
     "validadeDias": 10
   },
   "fontes": {
-    "uf": "Mococa-SP, sede da empresa. A confirmar com a equipe.",
-    "distribuidoraPadrao": "SigAgente exato da ANEEL. A CPFL Santa Cruz (CNPJ 53.859.112/0001-69) atende Mococa desde 22/03/2018, quando incorporou a CPFL Mococa (conferido na API da ANEEL em 03/11/2026).",
+    "distribuidoraDaCalibracao": "Distribuidora das contas reais usadas para calibrar PR e simultaneidade (tarefa 11 do Plano 1). Nas outras, a simulação traz o alerta de estimativa.",
     "fioBPercentualPorAno": "Lei 14.300/2022, art. 27. De 2029 em diante depende da valoração da ANEEL: cenário conservador de 100%, aplicado a todos os anos seguintes.",
     "consumoMinimoKwh": "REN ANEEL 1.000/2021 (custo de disponibilidade).",
     "performanceRatio": "Perdas típicas de temperatura, sujeira, cabos e inversor. A calibrar com as contas reais (tarefa 11).",

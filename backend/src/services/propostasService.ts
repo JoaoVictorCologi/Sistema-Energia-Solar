@@ -16,7 +16,7 @@ import { hojeEmSaoPaulo, somarDias } from '../utils/datas.ts';
 import { comoEquipamentoDaApi } from './equipamentosService.ts';
 import { formatarSimulacao, type SimulacaoFormatada } from './simulacaoFormato.ts';
 import {
-  alertaDeTarifaVencida, buscarReferencias, dimensionarPedido, montarEntrada, type PedidoDeSimulacao, type Referencias,
+  alertasDasReferencias, buscarReferencias, dimensionarPedido, montarEntrada, type DadosDoPedido, type DistribuidoraEscolhida, type Referencias,
 } from './simulacaoService.ts';
 
 // O pedido gravado na simulação (Decimal vira texto no JSONB).
@@ -25,12 +25,14 @@ const esquemaPedidoGravado = z.object({
   tipoLigacao: z.enum(['monofasico', 'bifasico', 'trifasico']),
   subgrupo: z.enum(['B1', 'B2', 'B3']),
   consumoMedioKwh: z.string().transform((valor) => new Decimal(valor)),
+  // Simulações de antes da cobertura nacional não gravavam a distribuidora: eram todas da CPFL Santa Cruz.
+  distribuidora: z.object({ cnpj: z.string(), sigla: z.string() }).default(parametros.distribuidoraDaCalibracao),
 });
 
 interface ContextoDaProposta {
   simulacao: SimulacaoGravada;
   cliente: ClienteResumo;
-  pedido: PedidoDeSimulacao;
+  pedido: DadosDoPedido & { distribuidora: DistribuidoraEscolhida };
   referencias: Referencias;
   hoje: string;
 }
@@ -62,10 +64,10 @@ function montarProposta(contexto: ContextoDaProposta, modulo: EquipamentoDoCatal
     custoDaTrocaDoInversor: inversor.preco,
   });
   const resultado = simular(entrada);
-  resultado.alertas.push(...alertaDeTarifaVencida(contexto.referencias.tarifa, contexto.hoje));
+  resultado.alertas.push(...alertasDasReferencias(contexto.referencias, contexto.hoje));
   const { local } = contexto.simulacao.resultado as SimulacaoFormatada;
   const { investimentoEstimado: _estimativaDaSimulacaoPublica, ...simulacaoDaProposta } = formatarSimulacao(entrada, resultado, {
-    local, pedido: contexto.pedido, tarifa: contexto.referencias.tarifa, distribuidora: parametros.distribuidoraPadrao, versaoParametros: parametros.versao,
+    local, pedido: contexto.pedido, tarifa: contexto.referencias.tarifa, distribuidora: contexto.pedido.distribuidora.sigla, versaoParametros: parametros.versao,
   });
   return { preco, entrada, simulacaoDaProposta };
 }
@@ -96,7 +98,7 @@ async function carregarContexto(codigoDaSimulacao: string, agora: Date): Promise
   if (!cliente) throw new ErroHttp(422, 'SIMULACAO_SEM_CLIENTE', 'Esta simulação não tem pedido de proposta de um cliente.');
   const pedido = esquemaPedidoGravado.parse((simulacao.entrada as { pedido: unknown }).pedido);
   const hoje = hojeEmSaoPaulo(agora);
-  return { simulacao, cliente, pedido, referencias: await buscarReferencias(simulacao.codigo_ibge, pedido.subgrupo, hoje), hoje };
+  return { simulacao, cliente, pedido, referencias: await buscarReferencias(simulacao.codigo_ibge, pedido.subgrupo, hoje, pedido.distribuidora), hoje };
 }
 
 // A entrada completa do motor fica no snapshot para reproduzir o cálculo, mas não vai para a tela.

@@ -10,7 +10,7 @@ function comAlteracao(alterar: (copia: typeof dados) => void): unknown {
 
 describe('parametros.json', () => {
   it('carrega o arquivo do projeto com os valores como Decimal', () => {
-    expect(parametros.uf).toBe('SP');
+    expect(parametros.distribuidoraDaCalibracao).toEqual({ cnpj: '53859112000169', sigla: 'CPFL Santa Cruz' });
     expect(parametros.fioBPercentualPorAno['2026'].toString()).toBe('0.6');
     expect(parametros.consumoMinimoKwh.bifasico.toNumber()).toBe(50);
   });

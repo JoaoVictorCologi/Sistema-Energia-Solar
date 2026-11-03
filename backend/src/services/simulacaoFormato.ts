@@ -5,11 +5,11 @@ import type { EntradaSimulacao, ResultadoSimulacao } from '../motor/simular.ts';
 import { tarifaComImpostos } from '../motor/tarifa.ts';
 import type { TarifaGravada } from '../repositories/tarifasRepository.ts';
 import type { LocalDoCep } from './cepService.ts';
-import type { PedidoDeSimulacao } from './simulacaoService.ts';
+import type { DadosDoPedido } from './simulacaoService.ts';
 
 export interface ContextoDaSimulacao {
   local: Pick<LocalDoCep, 'cidade' | 'uf'>;
-  pedido: PedidoDeSimulacao;
+  pedido: DadosDoPedido;
   tarifa: TarifaGravada;
   distribuidora: string;
   versaoParametros: string;

@@ -15,8 +15,7 @@ const fracao = decimal('0', '1');
 
 const esquemaParametros = z.object({
   versao: z.string().min(1),
-  uf: z.string().regex(/^[A-Z]{2}$/, 'sigla da UF, ex.: "SP"'),
-  distribuidoraPadrao: z.string().min(1),
+  distribuidoraDaCalibracao: z.object({ cnpj: z.string().regex(/^\d{14}$/, 'CNPJ com 14 números'), sigla: z.string().min(1) }),
   fioBPercentualPorAno: z.record(z.string().regex(/^\d{4}$/), fracao),
   consumoMinimoKwh: z.object({
     monofasico: decimal('0', '1000'),

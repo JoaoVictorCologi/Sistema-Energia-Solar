@@ -1,4 +1,5 @@
 import { Decimal } from 'decimal.js';
+import type { Knex } from 'knex';
 import { db } from '../database/conexao.ts';
 import type { Distribuidora, Tarifa } from '../tipos/tabelas.ts';
 
@@ -93,7 +94,7 @@ export async function gravarTarifas(gravacoes: GravacaoDaDistribuidora[], import
 }
 
 export interface FiltroDeTarifa {
-  sigla: string;
+  cnpj: string;
   subgrupo: string;
   classe: string;
   subclasse: string;
@@ -101,13 +102,37 @@ export interface FiltroDeTarifa {
   data: string;
 }
 
-export async function buscarTarifaVigente({ sigla, subgrupo, classe, subclasse, data }: FiltroDeTarifa): Promise<TarifaGravada | undefined> {
-  const linha = await db<Tarifa>('tarifa')
+function daDistribuidora(consulta: Knex.QueryBuilder, { cnpj, subgrupo, classe, subclasse }: Omit<FiltroDeTarifa, 'data'>): void {
+  consulta
     .join('distribuidora', 'distribuidora.id', 'tarifa.distribuidora_id')
-    .where({ 'distribuidora.sigla': sigla, 'tarifa.subgrupo': subgrupo, 'tarifa.modalidade': 'Convencional', 'tarifa.classe': classe, 'tarifa.subclasse': subclasse })
-    .where('tarifa.inicio_vigencia', '<=', data)
+    .where({ 'distribuidora.cnpj': cnpj, 'tarifa.subgrupo': subgrupo, 'tarifa.modalidade': 'Convencional', 'tarifa.classe': classe, 'tarifa.subclasse': subclasse });
+}
+
+export async function buscarTarifaVigente(filtro: FiltroDeTarifa): Promise<TarifaGravada | undefined> {
+  const linha = await db<Tarifa>('tarifa').modify(daDistribuidora, filtro)
+    .where('tarifa.inicio_vigencia', '<=', filtro.data)
     .orderBy('tarifa.inicio_vigencia', 'desc')
     .select(...COLUNAS_DA_TARIFA)
     .first();
   return linha && comoTarifa(linha);
+}
+
+// A vigência mais recente, anterior à data, que tem Fio B publicado (a ANEEL não publica o componente todo ano).
+export async function buscarUltimaTarifaComFioB(filtro: FiltroDeTarifa): Promise<TarifaGravada | undefined> {
+  const linha = await db<Tarifa>('tarifa').modify(daDistribuidora, filtro)
+    .where('tarifa.inicio_vigencia', '<', filtro.data)
+    .whereNotNull('tarifa.fio_b_rs_kwh')
+    .orderBy('tarifa.inicio_vigencia', 'desc')
+    .select(...COLUNAS_DA_TARIFA)
+    .first();
+  return linha && comoTarifa(linha);
+}
+
+// Distribuidoras que podem ser escolhidas: com tarifa vigente ou vencida há pouco (sem tarifa nova importada ainda).
+export async function listarCnpjsComTarifaDesde(data: string): Promise<Set<string>> {
+  const linhas = await db<Tarifa>('tarifa')
+    .join('distribuidora', 'distribuidora.id', 'tarifa.distribuidora_id')
+    .where((condicao) => condicao.whereNull('tarifa.fim_vigencia').orWhere('tarifa.fim_vigencia', '>=', data))
+    .distinct('distribuidora.cnpj');
+  return new Set(linhas.map((linha: { cnpj: string }) => linha.cnpj));
 }
