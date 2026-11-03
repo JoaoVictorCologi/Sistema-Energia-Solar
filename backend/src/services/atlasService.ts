@@ -1,14 +1,14 @@
 // Carga da irradiação do Atlas Brasileiro de Energia Solar 2017 (LABREN/INPE), CSV de sedes municipais,
 // plano inclinado igual à latitude. Colunas do CSV: ID;LON;LAT;NAME;CLASS;STATE;ANNUAL;JAN;…;DEC,
 // em Wh/m² por dia. O ID é a célula da grade, não o código IBGE: o município casa por nome sem acento + UF.
+// Carga nacional (Plano 5): todas as UFs de uma vez.
 import { createReadStream } from 'node:fs';
 import { parse } from 'csv-parse';
 import { Decimal } from 'decimal.js';
 import { z } from 'zod';
 import correcoes from '../parametros/correcoes-atlas.json' with { type: 'json' };
-import { parametros } from '../parametros/parametros.ts';
 import { salvarIrradiacoes, type IrradiacaoParaGravar } from '../repositories/irradiacaoRepository.ts';
-import { listarMunicipiosDaUf, type MunicipioParaGravar } from '../repositories/municipiosRepository.ts';
+import { listarTodosOsMunicipios, type MunicipioParaGravar } from '../repositories/municipiosRepository.ts';
 
 const COLUNAS_DOS_MESES = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 const COLUNAS_OBRIGATORIAS = ['NAME', 'STATE', 'ANNUAL', ...COLUNAS_DOS_MESES];
@@ -41,10 +41,18 @@ export interface ResultadoDoCasamento {
   linhasRecusadas: string[];
 }
 
-// Correções de nome: { UF: { "nome no Atlas": código IBGE } }, para o que não casa sozinho.
-export type CorrecoesDoAtlas = Record<string, Record<string, number>>;
+// Correções para o que não casa sozinho:
+// - nomes: { UF do Atlas: { "nome no Atlas": código IBGE } }; o código pode ser de outra UF (o Atlas tem
+//   Porto Alegre, capital do RS, com a UF do Rio Grande do Norte);
+// - semSedeNoAtlas: { código IBGE: { usarSedeDe: código IBGE } }, para município que não está no Atlas.
+const esquemaCorrecoes = z.object({
+  nomes: z.record(z.string().regex(/^[A-Z]{2}$/), z.record(z.string(), z.number().int())),
+  semSedeNoAtlas: z.record(z.string().regex(/^\d{7}$/), z.object({ usarSedeDe: z.number().int(), motivo: z.string() })),
+});
 
-const esquemaCorrecoes = z.record(z.string().regex(/^[A-Z]{2}$/), z.record(z.string(), z.number().int()));
+export type CorrecoesDoAtlas = z.infer<typeof esquemaCorrecoes>;
+
+const SEM_CORRECOES: CorrecoesDoAtlas = { nomes: {}, semSedeNoAtlas: {} };
 
 // "São João d'Aliança" e "Sao Joao D Alianca" viram o mesmo texto.
 export function normalizarNome(nome: string): string {
@@ -79,23 +87,34 @@ export function verificarIrradiacao({ hspAnual, hspMensal }: LinhaDoAtlas): stri
   return null;
 }
 
-function acharCodigoIbge(linha: LinhaDoAtlas, porNome: Map<string, number>, correcoesDaUf: Record<string, number>): number | undefined {
-  return correcoesDaUf[linha.nome] ?? porNome.get(normalizarNome(linha.nome));
+function chaveDoNome(uf: string, nome: string): string {
+  return `${uf}|${normalizarNome(nome)}`;
 }
 
-export function casarComMunicipios(
-  linhas: LinhaDoAtlas[],
-  municipios: MunicipioParaGravar[],
-  correcoesDaUf: Record<string, number> = {},
-): ResultadoDoCasamento {
-  const porNome = new Map(municipios.map((municipio) => [normalizarNome(municipio.nome), municipio.codigoIbge]));
-  const codigosDaUf = new Set(municipios.map((municipio) => municipio.codigoIbge));
+function acharCodigoIbge(linha: LinhaDoAtlas, porNome: Map<string, number>, correcoes: CorrecoesDoAtlas): number | undefined {
+  return correcoes.nomes[linha.uf]?.[linha.nome] ?? porNome.get(chaveDoNome(linha.uf, linha.nome));
+}
+
+// Município que não está no Atlas recebe a irradiação da sede indicada na correção (se ela casou).
+function aplicarSedesEmprestadas(resultado: ResultadoDoCasamento, codigos: Set<number>, casados: Set<number>, correcoes: CorrecoesDoAtlas): void {
+  for (const [destino, { usarSedeDe }] of Object.entries(correcoes.semSedeNoAtlas)) {
+    const origem = resultado.irradiacoes.find((irradiacao) => irradiacao.codigoIbge === usarSedeDe);
+    if (!origem || !codigos.has(Number(destino)) || casados.has(Number(destino))) continue;
+    casados.add(Number(destino));
+    resultado.irradiacoes.push({ ...origem, codigoIbge: Number(destino) });
+  }
+}
+
+// O nome só casa dentro da mesma UF ("Bom Jesus" existe em cinco estados).
+export function casarComMunicipios(linhas: LinhaDoAtlas[], municipios: MunicipioParaGravar[], correcoes: CorrecoesDoAtlas = SEM_CORRECOES): ResultadoDoCasamento {
+  const porNome = new Map(municipios.map((municipio) => [chaveDoNome(municipio.uf, municipio.nome), municipio.codigoIbge]));
+  const codigos = new Set(municipios.map((municipio) => municipio.codigoIbge));
   const resultado: ResultadoDoCasamento = { irradiacoes: [], municipiosSemIrradiacao: [], linhasSemMunicipio: [], linhasRecusadas: [] };
   const casados = new Set<number>();
 
   for (const linha of linhas) {
-    const codigoIbge = acharCodigoIbge(linha, porNome, correcoesDaUf);
-    if (codigoIbge === undefined || !codigosDaUf.has(codigoIbge) || casados.has(codigoIbge)) {
+    const codigoIbge = acharCodigoIbge(linha, porNome, correcoes);
+    if (codigoIbge === undefined || !codigos.has(codigoIbge) || casados.has(codigoIbge)) {
       resultado.linhasSemMunicipio.push(`${linha.nome}/${linha.uf}`);
       continue;
     }
@@ -107,6 +126,7 @@ export function casarComMunicipios(
     casados.add(codigoIbge);
     resultado.irradiacoes.push({ codigoIbge, hspAnual: linha.hspAnual, hspMensal: linha.hspMensal });
   }
+  aplicarSedesEmprestadas(resultado, codigos, casados, correcoes);
   resultado.municipiosSemIrradiacao = municipios.filter((municipio) => !casados.has(municipio.codigoIbge));
   return resultado;
 }
@@ -117,22 +137,18 @@ function conferirColunas(colunas: string[]): string[] {
   return colunas;
 }
 
-// Lê em streaming e guarda só as linhas da UF pedida.
-export async function lerCsvDoAtlas(caminho: string, uf: string): Promise<LinhaDoAtlas[]> {
+// Lê em streaming as 5.569 sedes do país.
+export async function lerCsvDoAtlas(caminho: string): Promise<LinhaDoAtlas[]> {
   const leitor = createReadStream(caminho).pipe(parse({ delimiter: ';', columns: conferirColunas, bom: true, trim: true }));
   const linhas: LinhaDoAtlas[] = [];
-  for await (const registro of leitor as AsyncIterable<Record<string, string>>) {
-    if (siglaDaUf(registro.STATE) === uf) linhas.push(converterRegistro(registro));
-  }
+  for await (const registro of leitor as AsyncIterable<Record<string, string>>) linhas.push(converterRegistro(registro));
   return linhas;
 }
 
-export async function carregarAtlas(caminhoDoCsv: string): Promise<ResultadoDoCasamento & { uf: string }> {
-  const { uf } = parametros;
-  const municipios = await listarMunicipiosDaUf(uf);
-  if (municipios.length === 0) throw new Error(`Nenhum município de ${uf} no banco. Rode antes: npm run carregar-municipios`);
-  const correcoesDaUf = esquemaCorrecoes.parse(correcoes)[uf] ?? {};
-  const resultado = casarComMunicipios(await lerCsvDoAtlas(caminhoDoCsv, uf), municipios, correcoesDaUf);
+export async function carregarAtlas(caminhoDoCsv: string): Promise<ResultadoDoCasamento> {
+  const municipios = await listarTodosOsMunicipios();
+  if (municipios.length === 0) throw new Error('Nenhum município no banco. Rode antes: npm run carregar-municipios');
+  const resultado = casarComMunicipios(await lerCsvDoAtlas(caminhoDoCsv), municipios, esquemaCorrecoes.parse(correcoes));
   await salvarIrradiacoes(resultado.irradiacoes);
-  return { ...resultado, uf };
+  return resultado;
 }

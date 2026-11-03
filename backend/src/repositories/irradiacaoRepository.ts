@@ -19,14 +19,21 @@ function comoLinha({ codigoIbge, hspAnual, hspMensal }: IrradiacaoParaGravar, ag
   return { codigo_ibge: codigoIbge, hsp_anual: hspAnual.toString(), ...meses, atualizado_em: agora };
 }
 
-// Recarregar o Atlas substitui os valores do município (o código IBGE é a chave).
+// Lotes de 1.000 linhas (15 colunas cada): o PostgreSQL aceita no máximo 65.535 parâmetros por consulta.
+const LINHAS_POR_LOTE = 1_000;
+
+// Recarregar o Atlas substitui os valores do município (o código IBGE é a chave). Tudo ou nada, numa transação.
 export async function salvarIrradiacoes(irradiacoes: IrradiacaoParaGravar[]): Promise<void> {
   if (irradiacoes.length === 0) return;
   const agora = new Date();
-  await db<IrradiacaoMunicipio>('irradiacao_municipio')
-    .insert(irradiacoes.map((irradiacao) => comoLinha(irradiacao, agora)))
-    .onConflict('codigo_ibge')
-    .merge(['hsp_anual', ...COLUNAS_DOS_MESES, 'atualizado_em']);
+  await db.transaction(async (transacao) => {
+    for (let inicio = 0; inicio < irradiacoes.length; inicio += LINHAS_POR_LOTE) {
+      await transacao<IrradiacaoMunicipio>('irradiacao_municipio')
+        .insert(irradiacoes.slice(inicio, inicio + LINHAS_POR_LOTE).map((irradiacao) => comoLinha(irradiacao, agora)))
+        .onConflict('codigo_ibge')
+        .merge(['hsp_anual', ...COLUNAS_DOS_MESES, 'atualizado_em']);
+    }
+  });
 }
 
 export interface IrradiacaoGravada {

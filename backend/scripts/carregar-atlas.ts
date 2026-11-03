@@ -1,4 +1,4 @@
-// Grava o HSP mensal de cada município da UF atendida a partir do CSV de sedes municipais do Atlas 2017.
+// Grava o HSP mensal de cada município do Brasil a partir do CSV de sedes municipais do Atlas 2017.
 // O ZIP é baixado e descompactado à mão (licença CC BY-NC-ND do LABREN/INPE).
 // Uso: npm run carregar-atlas -- <caminho>/tilted_latitude_means_sedes-munic.csv
 import { ErroDeConfiguracao, obterEnv } from '../src/config/env.ts';
@@ -24,12 +24,12 @@ try {
   const caminho = process.argv[2];
   if (!caminho) throw new Error('Informe o CSV: npm run carregar-atlas -- <caminho>/tilted_latitude_means_sedes-munic.csv');
   const resultado = await carregarAtlas(caminho);
-  console.log(`${resultado.irradiacoes.length} municípios de ${resultado.uf} com HSP gravado.`);
+  console.log(`${resultado.irradiacoes.length} municípios com HSP gravado.`);
   listar('Linhas recusadas pela verificação de faixa', resultado.linhasRecusadas);
   listar('Linhas do Atlas sem município correspondente', resultado.linhasSemMunicipio);
   listar('Municípios sem irradiação', resultado.municipiosSemIrradiacao.map(({ nome, codigoIbge }) => `${nome} (${codigoIbge})`));
   if (resultado.municipiosSemIrradiacao.length > 0) {
-    console.log('\nAcrescente o nome usado no Atlas e o código IBGE em src/parametros/correcoes-atlas.json e rode de novo.');
+    console.log('\nAcrescente em src/parametros/correcoes-atlas.json o nome usado no Atlas (em "nomes") ou a sede a usar (em "semSedeNoAtlas") e rode de novo.');
     process.exitCode = 1;
   }
 } catch (erro) {
