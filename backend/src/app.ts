@@ -5,6 +5,7 @@ import helmet from 'helmet';
 import { obterEnv } from './config/env.ts';
 import { rotaNaoEncontrada, tratarErros } from './middlewares/erros.ts';
 import { routersDosModulos } from './modulos/index.ts';
+import { rotasAdmin } from './routes/admin.ts';
 import { criarRotasAuth } from './routes/auth.ts';
 import { criarRotasClientes } from './routes/clientes.ts';
 import { rotasImportacoes } from './routes/importacoes.ts';
@@ -17,6 +18,7 @@ function criarRotasDaApi(): Router {
   api.use(rotasSaude);
   api.use(criarRotasAuth());
   api.use(rotasImportacoes);
+  api.use(rotasAdmin);
   api.use(criarRotasSimulacao());
   api.use(criarRotasClientes());
   for (const routerDoModulo of routersDosModulos) {

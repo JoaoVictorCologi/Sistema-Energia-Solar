@@ -32,3 +32,10 @@ export function validar(esquema: z.ZodObject): RequestHandler {
     next();
   };
 }
+
+// Para query e params, que o Express 5 não deixa trocar: valida e devolve a versão convertida.
+export function lerEntrada<Esquema extends z.ZodObject>(esquema: Esquema, dados: unknown): z.infer<Esquema> {
+  const resultado = esquema.strict().safeParse(dados ?? {});
+  if (!resultado.success) throw new ErroHttp(400, 'ENTRADA_INVALIDA', 'Dados inválidos. Confira os campos.', listarCamposInvalidos(resultado.error));
+  return resultado.data as z.infer<Esquema>;
+}

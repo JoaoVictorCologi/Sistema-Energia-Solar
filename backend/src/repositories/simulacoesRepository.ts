@@ -11,3 +11,9 @@ export async function inserirSimulacao(simulacao: SimulacaoParaGravar): Promise<
     .returning('codigo');
   return codigo;
 }
+
+export type SimulacaoDoCliente = Pick<Simulacao, 'id' | 'codigo' | 'criado_em' | 'resultado'>;
+
+export async function listarSimulacoesDoCliente(clienteId: number): Promise<SimulacaoDoCliente[]> {
+  return db<Simulacao>('simulacao').select('id', 'codigo', 'criado_em', 'resultado').where({ cliente_id: clienteId }).orderBy('criado_em', 'desc');
+}
