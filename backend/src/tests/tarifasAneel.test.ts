@@ -5,14 +5,18 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { FioBDaAneel, TarifaDaAneel } from '../integracoes/aneel.ts';
 import { ErroDeIntegracao } from '../integracoes/http.ts';
 import { ErroDeImportacao } from '../jobs/tipos.ts';
+import { listarCnpjsLigados } from '../repositories/distribuidorasRepository.ts';
 import { buscarVersaoDaUltimaImportacao } from '../repositories/importacoesRepository.ts';
-import { gravarTarifas, listarTarifasDaDistribuidora, type DadosDaTarifa, type TarifaGravada } from '../repositories/tarifasRepository.ts';
+import { gravarTarifas, listarTarifasPorCnpj, type DadosDaTarifa, type TarifaGravada } from '../repositories/tarifasRepository.ts';
 import {
-  converterValorDaAneel, importarTarifasDaAneel, montarTarifas, separarNovasEAlteradas, validarTarifas,
+  converterValorDaAneel, importarTarifasDaAneel, montarTarifas, separarNovasEAlteradas, separarTarifasValidas,
 } from '../services/tarifasAneelService.ts';
 
 vi.mock('../repositories/importacoesRepository.ts', () => ({ buscarVersaoDaUltimaImportacao: vi.fn() }));
-vi.mock('../repositories/tarifasRepository.ts', () => ({ listarTarifasDaDistribuidora: vi.fn(), gravarTarifas: vi.fn() }));
+vi.mock('../repositories/tarifasRepository.ts', () => ({ listarTarifasPorCnpj: vi.fn(), gravarTarifas: vi.fn() }));
+vi.mock('../repositories/distribuidorasRepository.ts', () => ({ listarCnpjsLigados: vi.fn() }));
+
+const SANTA_CRUZ = '53859112000169';
 
 const PASTA_DAS_FIXTURES = path.join(import.meta.dirname, 'fixtures', 'aneel');
 
@@ -37,7 +41,8 @@ function respostaJson(corpo: unknown, status = 200): Response {
 }
 
 // Responde como a ANEEL a partir das fixtures; `falharNoFioB` simula erro no meio da importação.
-function simularAneel({ falharNoFioB = false } = {}) {
+// A fixture de tarifas é só da CPFL Santa Cruz; `outraDistribuidora` acrescenta linhas de outro CNPJ.
+function simularAneel({ falharNoFioB = false, outraDistribuidora = [] as TarifaDaAneel[] } = {}) {
   return vi.fn(async (url: string, opcoes?: RequestInit) => {
     if (url.endsWith('package_show?id=tarifas-distribuidoras-energia-eletrica')) return respostaJson(lerFixture('package_show-tarifas.json'));
     if (url.endsWith('package_show?id=componentes-tarifarias')) return respostaJson(lerFixture('package_show-componentes.json'));
@@ -45,9 +50,13 @@ function simularAneel({ falharNoFioB = false } = {}) {
     if (corpo.filters.DscComponenteTarifario === 'TUSD_FioB') {
       return falharNoFioB ? respostaJson({}, 400) : respostaJson(lerFixture('datastore_search-fio-b.json'));
     }
-    return respostaJson(lerFixture('datastore_search-tarifas.json'));
+    return respostaJson({ success: true, result: { records: [...TARIFAS, ...outraDistribuidora] } });
   });
 }
+
+const consultasEnviadas = (fetch: ReturnType<typeof vi.fn>) => fetch.mock.calls
+  .filter(([url]) => String(url).endsWith('datastore_search'))
+  .map(([, opcoes]) => JSON.parse((opcoes as RequestInit).body as string));
 
 describe('conversão dos valores da ANEEL', () => {
   it('troca a vírgula por ponto e converte R$/MWh em R$/kWh', () => {
@@ -69,7 +78,7 @@ describe('conversão dos valores da ANEEL', () => {
 
 describe('montagem das tarifas', () => {
   it('junta TE, TUSD e o Fio B da mesma vigência', () => {
-    const tarifas = montarTarifas(TARIFAS, FIO_B);
+    const { tarifas } = montarTarifas(TARIFAS, FIO_B);
     const vigente = tarifas.find((item) => item.subgrupo === 'B1' && item.inicioVigencia === '2026-04-22');
     const anterior = tarifas.find((item) => item.subgrupo === 'B1' && item.inicioVigencia === '2025-05-22');
 
@@ -82,32 +91,49 @@ describe('montagem das tarifas', () => {
   it('com linha repetida na ANEEL, vale a publicada por último', () => {
     const repetida = { ...TARIFAS[3], _id: TARIFAS[3]._id + 1, VlrTE: '260,00' };
 
-    const tarifas = montarTarifas([repetida, ...TARIFAS], FIO_B);
+    const { tarifas } = montarTarifas([repetida, ...TARIFAS], FIO_B);
 
     expect(tarifas).toHaveLength(6);
     expect(tarifas.find((item) => item.subgrupo === 'B1' && item.inicioVigencia === '2026-04-22')?.te.toString()).toBe('0.26');
   });
 
-  it('recusa unidade diferente de MWh', () => {
+  it('recusa unidade diferente de MWh (erro sistemático: vale para a distribuidora inteira)', () => {
     expect(() => montarTarifas([{ ...TARIFAS[0], DscUnidadeTerciaria: 'kWh' }], [])).toThrow(/Unidade inesperada/);
+  });
+
+  it('valor ilegível descarta só a linha (a ANEEL tem Fio B em notação científica)', () => {
+    const fioBIlegivel = { ...FIO_B[0], VlrComponenteTarifario: '-2,0999999999999999E-8' };
+
+    const { tarifas, descartadas } = montarTarifas(TARIFAS, [fioBIlegivel]);
+
+    expect(tarifas).toHaveLength(6);
+    expect(descartadas).toEqual(['Fio B B1 (2026-04-22): valor inválido "-2,0999999999999999E-8"']);
   });
 });
 
 describe('validação das tarifas', () => {
   it('aceita as tarifas reais da CPFL Santa Cruz', () => {
-    expect(() => validarTarifas(montarTarifas(TARIFAS, FIO_B))).not.toThrow();
+    expect(separarTarifasValidas(montarTarifas(TARIFAS, FIO_B).tarifas).descartadas).toEqual([]);
   });
 
-  it('recusa Fio B igual ou maior que a TUSD', () => {
-    expect(() => validarTarifas([tarifa({ fioB: new Decimal('0.56039') })])).toThrow(/Fio B/);
+  it.each([
+    ['Fio B igual ou maior que a TUSD', { fioB: new Decimal('0.56039') }, /Fio B/],
+    ['tarifa B1 fora da faixa, como um valor em MWh lido como kWh', { te: new Decimal('252.19') }, /fora da faixa de 0,10 a 2,00/],
+    ['vigência que termina antes de começar', { fimVigencia: '2026-01-01' }, /antes do início/],
+  ])('descarta %s e mantém as outras linhas', (_caso, dados, motivo) => {
+    const { validas, descartadas } = separarTarifasValidas([tarifa(dados), tarifa({ inicioVigencia: '2025-05-22', fimVigencia: '2026-04-21' })]);
+
+    expect(validas.map((item) => item.inicioVigencia)).toEqual(['2025-05-22']);
+    expect(descartadas[0]).toMatch(motivo);
   });
 
-  it('recusa tarifa B1 fora da faixa, como um valor em MWh lido como kWh', () => {
-    expect(() => validarTarifas([tarifa({ te: new Decimal('252.19') })])).toThrow(/fora da faixa/);
+  it('a faixa vale para B1, B2 e B3 (erro de unidade atinge todas as linhas)', () => {
+    const { validas } = separarTarifasValidas(['B1', 'B2', 'B3'].map((subgrupo) => tarifa({ subgrupo, te: new Decimal('252.19') })));
+    expect(validas).toEqual([]);
   });
 
-  it('recusa vigência que termina antes de começar', () => {
-    expect(() => validarTarifas([tarifa({ fimVigencia: '2026-01-01' })])).toThrow(/antes do início/);
+  it('aceita as tarifas antigas, de cerca de R$ 0,31 por kWh', () => {
+    expect(separarTarifasValidas([tarifa({ te: new Decimal('0.15'), tusd: new Decimal('0.16'), fioB: new Decimal('0.08') })]).descartadas).toEqual([]);
   });
 });
 
@@ -141,35 +167,64 @@ describe('importarTarifasDaAneel', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(buscarVersaoDaUltimaImportacao).mockResolvedValue(null);
-    vi.mocked(listarTarifasDaDistribuidora).mockResolvedValue([]);
+    vi.mocked(listarTarifasPorCnpj).mockResolvedValue(new Map());
+    vi.mocked(listarCnpjsLigados).mockResolvedValue([SANTA_CRUZ]);
   });
   afterEach(() => vi.unstubAllGlobals());
 
-  it('busca só a distribuidora, B1 a B3, convencional, com colunas e limite, e grava as tarifas', async () => {
+  it('busca B1 a B3 de todas as distribuidoras numa consulta, só a tarifa cheia, com colunas e páginas de 5.000', async () => {
     const fetch = simularAneel();
     vi.stubGlobal('fetch', fetch);
 
-    const resultado = await importarTarifasDaAneel(CONTEXTO);
+    await importarTarifasDaAneel(CONTEXTO);
 
-    const consultaDeTarifas = JSON.parse((fetch.mock.calls[2][1] as RequestInit).body as string);
+    const [consultaDeTarifas, ...consultasDoFioB] = consultasEnviadas(fetch);
     expect(consultaDeTarifas).toMatchObject({
       resource_id: 'fcf2906c-7c32-4b9b-a637-054e7a5234f4',
-      filters: { SigAgente: 'CPFL Santa Cruz', DscBaseTarifaria: 'Tarifa de Aplicação', DscSubGrupo: ['B1', 'B2', 'B3'], DscModalidadeTarifaria: 'Convencional' },
-      limit: 1000,
+      filters: {
+        DscBaseTarifaria: 'Tarifa de Aplicação', DscSubGrupo: ['B1', 'B2', 'B3'], DscClasse: ['Residencial', 'Rural', 'Não se aplica'],
+        DscSubClasse: ['Residencial', 'Não se aplica'], DscModalidadeTarifaria: 'Convencional',
+      },
+      limit: 5000,
     });
-    expect(consultaDeTarifas.fields).toContain('VlrTUSD');
-    const consultaDoFioB = JSON.parse((fetch.mock.calls[3][1] as RequestInit).body as string);
-    expect(consultaDoFioB).toMatchObject({ resource_id: 'e8717aa8-2521-453f-bf16-fbb9a16eea39', filters: { NumCPFCNPJ: '53859112000169', DscComponenteTarifario: 'TUSD_FioB' } });
+    expect(consultaDeTarifas.filters).not.toHaveProperty('SigAgente');
+    expect(consultaDeTarifas.fields).toEqual(expect.arrayContaining(['SigAgente', 'NumCNPJDistribuidora', 'VlrTUSD']));
+    // Fio B dos arquivos de componentes que existem entre 2023 e 2026 (a fixture tem 2025 e 2026).
+    expect(consultasDoFioB.map((consulta) => consulta.resource_id).sort()).toEqual(['a4060165-3a0c-404f-926c-83901088b67c', 'e8717aa8-2521-453f-bf16-fbb9a16eea39']);
+    expect(consultasDoFioB[0].filters).toMatchObject({ DscComponenteTarifario: 'TUSD_FioB' });
+  });
 
-    expect(gravarTarifas).toHaveBeenCalledWith(expect.objectContaining({
-      distribuidora: { sigla: 'CPFL Santa Cruz', cnpj: '53859112000169' }, importacaoId: 7, alteradas: [],
-    }));
-    expect(vi.mocked(gravarTarifas).mock.calls[0][0].novas).toHaveLength(6);
-    expect(resultado).toEqual({
-      status: 'sucesso',
-      linhasGravadas: 6,
-      versaoDaFonte: 'CPFL Santa Cruz | tarifas 2026-11-02T11:07:53.210106 | componentes 2026 2026-11-02T08:24:31.536556',
-    });
+  it('grava as distribuidoras ligadas numa gravação só, com a sigla da vigência mais recente', async () => {
+    vi.stubGlobal('fetch', simularAneel());
+
+    const resultado = await importarTarifasDaAneel(CONTEXTO);
+
+    const [gravacoes, importacaoId] = vi.mocked(gravarTarifas).mock.calls[0];
+    expect(importacaoId).toBe(7);
+    expect(gravacoes.map((gravacao) => gravacao.distribuidora)).toEqual([{ cnpj: SANTA_CRUZ, sigla: 'CPFL Santa Cruz' }]);
+    expect(gravacoes[0].novas).toHaveLength(6);
+    expect(resultado).toMatchObject({ status: 'sucesso', linhasGravadas: 6 });
+    expect(resultado.versaoDaFonte).toMatch(/^1 distribuidoras, sha256 [0-9a-f]{32}$/);
+  });
+
+  it('distribuidora que não está ligada a município fica de fora', async () => {
+    const outra = TARIFAS.map((linha) => ({ ...linha, _id: linha._id + 1_000_000, NumCNPJDistribuidora: '99999999000199', SigAgente: 'OUTRA' }));
+    vi.stubGlobal('fetch', simularAneel({ outraDistribuidora: outra }));
+
+    await importarTarifasDaAneel(CONTEXTO);
+
+    expect(vi.mocked(gravarTarifas).mock.calls[0][0].map((gravacao) => gravacao.distribuidora.cnpj)).toEqual([SANTA_CRUZ]);
+  });
+
+  it('distribuidora sem nenhuma linha válida segue com as tarifas anteriores, sem barrar as outras', async () => {
+    const quebrada = TARIFAS.map((linha) => ({ ...linha, _id: linha._id + 1_000_000, NumCNPJDistribuidora: '99999999000199', SigAgente: 'QUEBRADA', VlrTE: '252190,00' }));
+    vi.mocked(listarCnpjsLigados).mockResolvedValue([SANTA_CRUZ, '99999999000199']);
+    vi.stubGlobal('fetch', simularAneel({ outraDistribuidora: quebrada }));
+
+    const resultado = await importarTarifasDaAneel(CONTEXTO);
+
+    expect(vi.mocked(gravarTarifas).mock.calls[0][0].map((gravacao) => gravacao.distribuidora.cnpj)).toEqual([SANTA_CRUZ]);
+    expect(resultado.mensagem).toMatch(/^1 distribuidoras importadas; descartado: QUEBRADA B1 Residencial \(2025-05-22\): TE \+ TUSD/);
   });
 
   it('segunda execução sem mudança na ANEEL não baixa nem grava nada', async () => {
@@ -187,6 +242,14 @@ describe('importarTarifasDaAneel', () => {
     expect(gravarTarifas).not.toHaveBeenCalled();
   });
 
+  it('distribuidora nova ligada a município muda a versão e pede reimportação', async () => {
+    vi.stubGlobal('fetch', simularAneel());
+    const antes = (await importarTarifasDaAneel(CONTEXTO)).versaoDaFonte;
+    vi.mocked(listarCnpjsLigados).mockResolvedValue([SANTA_CRUZ, '99999999000199']);
+
+    expect((await importarTarifasDaAneel(CONTEXTO)).versaoDaFonte).not.toBe(antes);
+  });
+
   it('erro no meio da importação não grava nada', async () => {
     vi.stubGlobal('fetch', simularAneel({ falharNoFioB: true }));
 
@@ -194,21 +257,19 @@ describe('importarTarifasDaAneel', () => {
     expect(gravarTarifas).not.toHaveBeenCalled();
   });
 
-  it('distribuidora sem tarifas na ANEEL é um erro que aponta o parametros.json', async () => {
-    const fetch = simularAneel();
-    fetch.mockImplementation(async (url: string) => (url.includes('package_show')
-      ? respostaJson(lerFixture(url.endsWith('componentes-tarifarias') ? 'package_show-componentes.json' : 'package_show-tarifas.json'))
-      : respostaJson({ success: true, result: { records: [] } })));
-    vi.stubGlobal('fetch', fetch);
-
-    await expect(importarTarifasDaAneel(CONTEXTO)).rejects.toThrow(/distribuidoraPadrao/);
-  });
-
-  it('no começo do ano, sem o recurso de componentes do ano, usa o do ano anterior', async () => {
+  it('sem distribuidoras ligadas, pede a importação aneel-distribuidoras antes', async () => {
+    vi.mocked(listarCnpjsLigados).mockResolvedValue([]);
     vi.stubGlobal('fetch', simularAneel());
 
-    const resultado = await importarTarifasDaAneel({ ...CONTEXTO, agora: new Date('2027-01-02T12:00:00Z') });
+    await expect(importarTarifasDaAneel(CONTEXTO)).rejects.toThrow(/aneel-distribuidoras/);
+  });
 
-    expect(resultado.versaoDaFonte).toContain('componentes 2026');
+  it('no começo do ano, sem o recurso de componentes do ano, usa os anteriores', async () => {
+    const fetch = simularAneel();
+    vi.stubGlobal('fetch', fetch);
+
+    await importarTarifasDaAneel({ ...CONTEXTO, agora: new Date('2027-01-02T12:00:00Z') });
+
+    expect(consultasEnviadas(fetch).slice(1).map((consulta) => consulta.resource_id)).toContain('e8717aa8-2521-453f-bf16-fbb9a16eea39');
   });
 });

@@ -1,5 +1,17 @@
 {
-  "SP": {
-    "Florínia": 3516101
+  "nomes": {
+    "BA": { "Santa Teresinha": 2928505, "Muquém de São Francisco": 2922250 },
+    "MG": { "São Thomé das Letras": 3165206, "Dona Eusébia": 3122900, "Barão de Monte Alto": 3105509 },
+    "MT": { "Santo Antônio do Leverger": 5107800 },
+    "PE": { "Belém de São Francisco": 2601607, "Lagoa do Itaenga": 2608503 },
+    "RN": { "Porto Alegre": 4314902, "Arês": 2401206, "Augusto Severo": 2401305, "Açu": 2400208 },
+    "RR": { "São Luiz": 1400605 },
+    "SE": { "Amparo de São Francisco": 2800100 },
+    "SP": { "Florínia": 3516101 },
+    "TO": { "São Valério da Natividade": 1720499, "Fortaleza do Tabocão": 1708254 }
+  },
+  "semSedeNoAtlas": {
+    "2605459": { "usarSedeDe": 2611606, "motivo": "Fernando de Noronha não está no Atlas; usa Recife como aproximação." },
+    "5101837": { "usarSedeDe": 5107925, "motivo": "Boa Esperança do Norte foi criado depois de 2017; a sede era distrito de Sorriso." }
   }
 }

@@ -1,5 +1,5 @@
-// Consultas aos conjuntos de tarifas da ANEEL. Só a distribuidora pedida, só B1, B2 e B3 convencional,
-// só a Tarifa de Aplicação (a usada no faturamento) e só as colunas usadas.
+// Consultas aos conjuntos de tarifas da ANEEL: só B1, B2 e B3 convencional, só a Tarifa de Aplicação (a usada no
+// faturamento) e só as colunas usadas, de todas as distribuidoras numa consulta (cerca de 27 mil das 650 mil linhas).
 import { z } from 'zod';
 import { buscarRecursosDoPacote, percorrerDatastore, type RecursoDoCkan } from './ckan.ts';
 import { ErroDeIntegracao } from './http.ts';
@@ -9,11 +9,14 @@ const RECURSO_DE_TARIFAS = 'tarifas-homologadas-distribuidoras-energia-eletrica.
 const CONJUNTO_DE_COMPONENTES = 'componentes-tarifarias';
 
 const SUBGRUPOS = ['B1', 'B2', 'B3'];
+const CLASSES = ['Residencial', 'Rural', 'Não se aplica'];
+const SUBCLASSES = ['Residencial', 'Não se aplica'];
 const NAO_SE_APLICA = 'Não se aplica';
 
 // Valores e datas chegam como texto; a conversão (vírgula decimal, MWh para kWh) fica no service.
 const esquemaTarifa = z.object({
   _id: z.number(),
+  SigAgente: z.string(),
   NumCNPJDistribuidora: z.string(),
   DatInicioVigencia: z.string(),
   DatFimVigencia: z.string().nullable(),
@@ -27,6 +30,7 @@ const esquemaTarifa = z.object({
 
 const esquemaFioB = z.object({
   _id: z.number(),
+  NumCPFCNPJ: z.string(),
   DatInicioVigencia: z.string(),
   DscSubGrupoTarifario: z.string(),
   DscClasseConsumidor: z.string(),
@@ -49,14 +53,19 @@ export async function buscarRecursoDeTarifas(): Promise<RecursoDoCkan> {
   return recurso;
 }
 
-// Um CSV por ano; no começo do ano o novo pode ainda não existir, então vale o do ano anterior.
-export async function buscarRecursoDeComponentes(ano: number): Promise<RecursoDoCkan & { ano: number }> {
+// Um CSV por ano, e o Fio B de uma vigência está no arquivo do ano em que ela começou. A ANEEL não publica o
+// componente de todas as distribuidoras todo ano (em 11/2026, 22 só tinham Fio B até 2023): por isso os últimos 4 anos.
+const ANOS_DE_COMPONENTES = 4;
+
+export async function buscarRecursosDeComponentes(ano: number): Promise<(RecursoDoCkan & { ano: number })[]> {
   const recursos = await buscarRecursosDoPacote(CONJUNTO_DE_COMPONENTES);
-  for (const anoProcurado of [ano, ano - 1]) {
+  const anos = Array.from({ length: ANOS_DE_COMPONENTES }, (_, recuo) => ano - recuo);
+  const encontrados = anos.flatMap((anoProcurado) => {
     const recurso = recursos.find((item) => item.nome === `componentes-tarifarias-${anoProcurado}.csv` && item.datastoreAtivo);
-    if (recurso) return { ...recurso, ano: anoProcurado };
-  }
-  throw new ErroDeIntegracao(`A ANEEL não tem componentes tarifários de ${ano} nem de ${ano - 1} com DataStore ativo.`);
+    return recurso ? [{ ...recurso, ano: anoProcurado }] : [];
+  });
+  if (encontrados.length === 0) throw new ErroDeIntegracao(`A ANEEL não tem componentes tarifários de ${anos.at(-1)} a ${ano} com DataStore ativo.`);
+  return encontrados;
 }
 
 function lerRegistros<T>(esquema: z.ZodType<T>, registros: Record<string, unknown>[], destino: T[]): void {
@@ -67,14 +76,20 @@ function lerRegistros<T>(esquema: z.ZodType<T>, registros: Record<string, unknow
   }
 }
 
-export async function buscarTarifas(recursoId: string, sigla: string): Promise<TarifaDaAneel[]> {
+// Páginas de 5.000: as tarifas B1–B3 de todas as distribuidoras e vigências cabem em cerca de 6.
+const TAMANHO_DA_PAGINA = 5_000;
+
+export async function buscarTarifas(recursoId: string): Promise<TarifaDaAneel[]> {
   const tarifas: TarifaDaAneel[] = [];
   await percorrerDatastore({
     recursoId,
+    tamanhoDaPagina: TAMANHO_DA_PAGINA,
     filtros: {
-      SigAgente: sigla,
       DscBaseTarifaria: 'Tarifa de Aplicação',
       DscSubGrupo: SUBGRUPOS,
+      // Só a tarifa cheia, a que a simulação usa: B1 residencial, B2 rural e B3 (sem tarifa social nem cooperativas).
+      DscClasse: CLASSES,
+      DscSubClasse: SUBCLASSES,
       DscModalidadeTarifaria: 'Convencional',
       // SCEE é a variante do sistema de compensação; fica de fora, como os postos e os acessantes.
       DscDetalhe: NAO_SE_APLICA,
@@ -87,15 +102,17 @@ export async function buscarTarifas(recursoId: string, sigla: string): Promise<T
 }
 
 // Componentes usam o CNPJ da distribuidora, não a sigla.
-export async function buscarFioB(recursoId: string, cnpj: string): Promise<FioBDaAneel[]> {
+export async function buscarFioB(recursoId: string): Promise<FioBDaAneel[]> {
   const componentes: FioBDaAneel[] = [];
   await percorrerDatastore({
     recursoId,
+    tamanhoDaPagina: TAMANHO_DA_PAGINA,
     filtros: {
-      NumCPFCNPJ: cnpj,
       DscComponenteTarifario: 'TUSD_FioB',
       DscBaseTarifaria: 'Tarifa de Aplicação',
       DscSubGrupoTarifario: SUBGRUPOS,
+      DscClasseConsumidor: CLASSES,
+      DscSubClasseConsumidor: SUBCLASSES,
       DscModalidadeTarifaria: 'Convencional',
       DscDetalheConsumidor: NAO_SE_APLICA,
       DscPostoTarifario: NAO_SE_APLICA,

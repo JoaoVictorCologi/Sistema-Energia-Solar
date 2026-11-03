@@ -1,13 +1,17 @@
 import { createBrowserRouter, Navigate, Outlet, RouterProvider, ScrollRestoration, type RouteObject } from 'react-router';
-import { EmConstrucao } from './components/EmConstrucao.tsx';
 import { LayoutPublico } from './components/publico/LayoutPublico.tsx';
 import { RotaProtegida } from './components/RotaProtegida.tsx';
 import { AuthProvider } from './contexts/AuthContext.tsx';
 import { rotasAdminDosModulos, rotasPublicasDosModulos, type RotaDeModulo } from './modulos/index.ts';
+import { Clientes } from './pages/admin/Clientes.tsx';
+import { DetalheDoCliente } from './pages/admin/DetalheDoCliente.tsx';
+import { Equipamentos } from './pages/admin/Equipamentos.tsx';
+import { Importacoes } from './pages/admin/Importacoes.tsx';
 import { LayoutAdmin } from './pages/admin/LayoutAdmin.tsx';
 import { Login } from './pages/admin/Login.tsx';
 import { NaoEncontradaAdmin } from './pages/admin/NaoEncontradaAdmin.tsx';
 import { Painel } from './pages/admin/Painel.tsx';
+import { Propostas } from './pages/admin/Propostas.tsx';
 import { DetalheSolucao } from './pages/publico/DetalheSolucao.tsx';
 import { Metodologia } from './pages/publico/Metodologia.tsx';
 import { NaoEncontrada } from './pages/publico/NaoEncontrada.tsx';
@@ -28,6 +32,11 @@ const inicioDoSite: RouteObject[] = rotasPublicasDosModulos.some((rota) => rota.
 const rotasPublicas: RouteObject[] = [
   ...inicioDoSite,
   { path: '/simulador', element: <Simulador /> },
+  // Carregada só quando aberta: o Recharts do gráfico não pesa nas outras páginas.
+  {
+    path: '/simulador/resultado',
+    lazy: async () => ({ Component: (await import('./pages/publico/ResultadoSimulacao.tsx')).ResultadoSimulacao }),
+  },
   { path: '/metodologia', element: <Metodologia /> },
   { path: '/solucoes', element: <Solucoes /> },
   { path: '/solucoes/:slug', element: <DetalheSolucao /> },
@@ -37,20 +46,15 @@ const rotasPublicas: RouteObject[] = [
   { path: '*', element: <NaoEncontrada /> },
 ];
 
-// Telas do Plano 1 que ainda esperam a API; cada uma troca pela tela de verdade na sua tarefa.
-const telasProvisoriasDoNucleo: RouteObject[] = [
-  {
-    path: 'clientes',
-    element: <EmConstrucao titulo="Clientes" origem="Plano 1 · tarefa 13" descricao="Lista com busca por nome ou e-mail e paginação; no detalhe, os dados de contato, as simulações e as propostas de cada cliente." />,
-  },
-  {
-    path: 'propostas',
-    element: <EmConstrucao titulo="Propostas" origem="Plano 1 · tarefa 14" descricao="Proposta gerada a partir de uma simulação, com o preço dos equipamentos calculado no servidor, status (enviada, aceita, recusada) e página de impressão." />,
-  },
-  {
-    path: 'importacoes',
-    element: <EmConstrucao titulo="Importações" origem="Plano 1 · tarefas 6 e 15" descricao="Última execução de cada importação (ANEEL, Banco Central e as dos módulos), com status, aviso de dado desatualizado e o botão “atualizar agora”." />,
-  },
+// Telas do administrador do núcleo (Plano 1, tarefas 13 a 15).
+const telasDoNucleo: RouteObject[] = [
+  { path: 'clientes', element: <Clientes /> },
+  { path: 'clientes/:id', element: <DetalheDoCliente /> },
+  { path: 'propostas', element: <Propostas /> },
+  // Com o gráfico (Recharts): carregada só quando aberta.
+  { path: 'propostas/:id', lazy: async () => ({ Component: (await import('./pages/admin/DetalheDaProposta.tsx')).DetalheDaProposta }) },
+  { path: 'equipamentos', element: <Equipamentos /> },
+  { path: 'importacoes', element: <Importacoes /> },
 ];
 
 // O AuthProvider fica só na área restrita: as páginas públicas não consultam /api/auth/me.
@@ -65,7 +69,7 @@ const rotasDoAdmin: RouteObject = {
         element: <LayoutAdmin />,
         children: [
           { index: true, element: <Painel /> },
-          ...telasProvisoriasDoNucleo,
+          ...telasDoNucleo,
           ...rotasAdminDosModulos.map(comoRota),
           { path: '*', element: <NaoEncontradaAdmin /> },
         ],
@@ -73,6 +77,10 @@ const rotasDoAdmin: RouteObject = {
     },
   ],
 };
+
+function CarregandoPagina() {
+  return <p role="status" className="p-10 text-sm text-muted-foreground">Carregando…</p>;
+}
 
 function Raiz() {
   return (
@@ -84,7 +92,8 @@ function Raiz() {
 }
 
 const roteador = createBrowserRouter([
-  { element: <Raiz />, children: [{ element: <LayoutPublico />, children: rotasPublicas }, rotasDoAdmin] },
+  // HydrateFallback: o que aparece enquanto o código de uma rota sob demanda (resultado, proposta) chega na primeira abertura.
+  { element: <Raiz />, HydrateFallback: CarregandoPagina, children: [{ element: <LayoutPublico />, children: rotasPublicas }, rotasDoAdmin] },
 ]);
 
 export function App() {

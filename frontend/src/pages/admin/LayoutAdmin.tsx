@@ -9,6 +9,7 @@ const menuDoNucleo: ItemDeMenu[] = [
   { rotulo: 'Painel', caminho: '/admin' },
   { rotulo: 'Clientes', caminho: '/admin/clientes' },
   { rotulo: 'Propostas', caminho: '/admin/propostas' },
+  { rotulo: 'Equipamentos', caminho: '/admin/equipamentos' },
   { rotulo: 'Importações', caminho: '/admin/importacoes' },
 ];
 
@@ -25,11 +26,12 @@ export function LayoutAdmin() {
   }
 
   return (
-    <div className="flex min-h-svh flex-col bg-brand-soft">
+    <div className="flex min-h-svh flex-col bg-brand-soft print:bg-white">
       <a href="#conteudo" className="sr-only fixed top-2 left-2 z-[100] rounded-md bg-white px-4 py-3 text-brand-blue focus:not-sr-only">
         Pular para o conteúdo
       </a>
-      <header className="bg-brand-deep text-white">
+      {/* Na impressão (proposta) saem cabeçalho e menu: fica só o documento. */}
+      <header className="bg-brand-deep text-white print:hidden">
         <div className="site-shell flex flex-wrap items-center justify-between gap-x-8 gap-y-2 py-2">
           <div className="flex items-center gap-4">
             <img src={empresa.logo.src} alt="Don Energy" width={empresa.logo.largura} height={empresa.logo.altura} className="h-12 w-auto" />
@@ -46,9 +48,9 @@ export function LayoutAdmin() {
           </div>
         </div>
       </header>
-      <div className="site-shell flex flex-1 flex-col gap-8 py-8 md:flex-row md:gap-12">
+      <div className="site-shell flex flex-1 flex-col gap-8 py-8 md:flex-row md:gap-12 print:max-w-none print:p-0">
         {/* No celular, os itens quebram em linhas; a partir de 768 px viram uma coluna à esquerda. */}
-        <nav aria-label="Menu do administrador" className="md:w-48 md:shrink-0">
+        <nav aria-label="Menu do administrador" className="md:w-48 md:shrink-0 print:hidden">
           <ul className="flex flex-wrap gap-2 md:flex-col">
             {itensDoMenu.map((item) => (
               <li key={item.caminho}>

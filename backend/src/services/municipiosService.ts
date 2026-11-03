@@ -1,11 +1,9 @@
-import { buscarMunicipiosDaUf } from '../integracoes/ibge.ts';
-import { parametros } from '../parametros/parametros.ts';
+import { buscarMunicipiosDoBrasil } from '../integracoes/ibge.ts';
 import { salvarMunicipios } from '../repositories/municipiosRepository.ts';
 
-// Carga única (script): os municípios da UF atendida, que é a do parametros.json.
-export async function carregarMunicipios(): Promise<{ uf: string; quantidade: number }> {
-  const { uf } = parametros;
-  const municipios = await buscarMunicipiosDaUf(uf);
+// Carga única (script): todos os municípios do Brasil. Rodar de novo só atualiza nome e UF.
+export async function carregarMunicipios(): Promise<{ quantidade: number; ufs: number }> {
+  const municipios = await buscarMunicipiosDoBrasil();
   await salvarMunicipios(municipios);
-  return { uf, quantidade: municipios.length };
+  return { quantidade: municipios.length, ufs: new Set(municipios.map((municipio) => municipio.uf)).size };
 }

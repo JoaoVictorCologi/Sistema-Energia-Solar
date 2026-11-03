@@ -1,4 +1,4 @@
-// Premissas que não têm API (Lei 14.300, impostos, PR, custo de referência), versionadas no Git.
+// Premissas que não têm API (Lei 14.300, PR, custo de referência), versionadas no Git. Impostos: tributos.ts.
 // O arquivo é validado ao carregar: um valor fora da faixa impede o backend de subir.
 import { Decimal } from 'decimal.js';
 import { z } from 'zod';
@@ -15,19 +15,13 @@ const fracao = decimal('0', '1');
 
 const esquemaParametros = z.object({
   versao: z.string().min(1),
-  uf: z.string().regex(/^[A-Z]{2}$/, 'sigla da UF, ex.: "SP"'),
-  distribuidoraPadrao: z.string().min(1),
+  // Distribuidora das contas reais que calibram PR e simultaneidade; `calibrada` só depois de conferir as contas.
+  calibracao: z.object({ calibrada: z.boolean(), cnpj: z.string().regex(/^\d{14}$/, 'CNPJ com 14 números'), sigla: z.string().min(1) }),
   fioBPercentualPorAno: z.record(z.string().regex(/^\d{4}$/), fracao),
   consumoMinimoKwh: z.object({
     monofasico: decimal('0', '1000'),
     bifasico: decimal('0', '1000'),
     trifasico: decimal('0', '1000'),
-  }),
-  impostos: z.object({
-    // Faixas em ordem crescente; a última (ateKwh nulo) vale para qualquer consumo acima.
-    icmsFaixas: z.array(z.object({ ateKwh: decimal('0', '100000').nullable(), aliquota: fracao })).min(1),
-    pis: fracao,
-    cofins: fracao,
   }),
   performanceRatio: decimal('0.70', '0.85'),
   degradacaoAnualPadrao: decimal('0.002', '0.01'),
@@ -36,21 +30,13 @@ const esquemaParametros = z.object({
   coberturaAlvo: decimal('0.5', '1.2'),
   horizonteAnos: z.number().int().min(1).max(40),
   validadeDosCreditosMeses: z.number().int().min(1).max(120),
-  icmsSobreFioB: z.boolean(),
   moduloReferencia: z.object({ potenciaW: decimal('100', '800') }),
   inversoresReferenciaKw: z.array(decimal('0.5', '1000')).min(1),
   operacaoManutencaoAnual: decimal('0', '0.03'),
   trocaDoInversor: z.object({ ano: z.number().int().min(10).max(15), fracaoDoInvestimento: decimal('0', '0.5') }),
   proposta: z.object({ instalacaoPorKwp: decimal('0', '10000'), margem: decimal('0', '1'), validadeDias: z.number().int().min(1).max(90) }),
   fontes: z.record(z.string(), z.string()),
-}).refine(
-  // Tributos "por dentro": a tarifa é dividida por (1 − soma), que precisa ficar longe de zero.
-  ({ impostos }) => impostos.icmsFaixas.every(({ aliquota }) => aliquota.plus(impostos.pis).plus(impostos.cofins).lt('0.5')),
-  { message: 'ICMS + PIS + COFINS precisa ser menor que 0.5', path: ['impostos'] },
-).refine(
-  ({ impostos }) => impostos.icmsFaixas.at(-1)?.ateKwh === null,
-  { message: 'a última faixa de ICMS precisa ter ateKwh nulo', path: ['impostos', 'icmsFaixas'] },
-);
+});
 
 export type Parametros = z.infer<typeof esquemaParametros>;
 

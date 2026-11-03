@@ -1,4 +1,5 @@
 import { Decimal } from 'decimal.js';
+import type { Knex } from 'knex';
 import { db } from '../database/conexao.ts';
 import type { Distribuidora, Tarifa } from '../tipos/tabelas.ts';
 
@@ -19,11 +20,10 @@ export interface TarifaGravada extends DadosDaTarifa {
   id: number;
 }
 
-export interface GravacaoDeTarifas {
+export interface GravacaoDaDistribuidora {
   distribuidora: { sigla: string; cnpj: string };
   novas: DadosDaTarifa[];
   alteradas: TarifaGravada[];
-  importacaoId: number;
 }
 
 const COLUNAS_DA_TARIFA = [
@@ -62,34 +62,39 @@ function comoLinha(tarifa: DadosDaTarifa, importacaoId: number, agora: Date) {
   };
 }
 
-export async function listarTarifasDaDistribuidora(sigla: string): Promise<TarifaGravada[]> {
+// Tarifas já gravadas, agrupadas pelo CNPJ da distribuidora: a importação compara com o que chegou.
+export async function listarTarifasPorCnpj(): Promise<Map<string, TarifaGravada[]>> {
   const linhas = await db<Tarifa>('tarifa')
     .join('distribuidora', 'distribuidora.id', 'tarifa.distribuidora_id')
-    .where('distribuidora.sigla', sigla)
-    .select(...COLUNAS_DA_TARIFA);
-  return linhas.map(comoTarifa);
+    .select(...COLUNAS_DA_TARIFA, 'distribuidora.cnpj');
+  const porCnpj = new Map<string, TarifaGravada[]>();
+  for (const linha of linhas as (Tarifa & { cnpj: string })[]) porCnpj.set(linha.cnpj, [...(porCnpj.get(linha.cnpj) ?? []), comoTarifa(linha)]);
+  return porCnpj;
 }
 
-// Tudo numa transação: se qualquer parte falhar, nenhuma tarifa muda.
-export async function gravarTarifas({ distribuidora, novas, alteradas, importacaoId }: GravacaoDeTarifas): Promise<void> {
+// Todas as distribuidoras numa transação: se qualquer parte falhar, nenhuma tarifa muda.
+export async function gravarTarifas(gravacoes: GravacaoDaDistribuidora[], importacaoId: number): Promise<void> {
   const agora = new Date();
   await db.transaction(async (transacao) => {
-    const [{ id: distribuidoraId }] = await transacao<Distribuidora>('distribuidora')
-      .insert({ sigla: distribuidora.sigla, cnpj: distribuidora.cnpj, nome: distribuidora.sigla, atualizado_em: agora })
-      .onConflict('sigla')
-      .merge(['cnpj', 'atualizado_em'])
-      .returning('id');
-    if (novas.length > 0) {
-      await transacao<Tarifa>('tarifa').insert(novas.map((tarifa) => ({ ...comoLinha(tarifa, importacaoId, agora), distribuidora_id: distribuidoraId })));
-    }
-    for (const tarifa of alteradas) {
-      await transacao<Tarifa>('tarifa').where({ id: tarifa.id }).update(comoLinha(tarifa, importacaoId, agora));
+    for (const { distribuidora, novas, alteradas } of gravacoes) {
+      const [{ id: distribuidoraId }] = await transacao<Distribuidora>('distribuidora')
+        .insert({ sigla: distribuidora.sigla, cnpj: distribuidora.cnpj, nome: distribuidora.sigla, atualizado_em: agora })
+        // O CNPJ é a chave; a sigla e o nome seguem a vigência mais recente.
+        .onConflict('cnpj')
+        .merge(['sigla', 'nome', 'atualizado_em'])
+        .returning('id');
+      if (novas.length > 0) {
+        await transacao<Tarifa>('tarifa').insert(novas.map((tarifa) => ({ ...comoLinha(tarifa, importacaoId, agora), distribuidora_id: distribuidoraId })));
+      }
+      for (const tarifa of alteradas) {
+        await transacao<Tarifa>('tarifa').where({ id: tarifa.id }).update(comoLinha(tarifa, importacaoId, agora));
+      }
     }
   });
 }
 
 export interface FiltroDeTarifa {
-  sigla: string;
+  cnpj: string;
   subgrupo: string;
   classe: string;
   subclasse: string;
@@ -97,13 +102,37 @@ export interface FiltroDeTarifa {
   data: string;
 }
 
-export async function buscarTarifaVigente({ sigla, subgrupo, classe, subclasse, data }: FiltroDeTarifa): Promise<TarifaGravada | undefined> {
-  const linha = await db<Tarifa>('tarifa')
+function daDistribuidora(consulta: Knex.QueryBuilder, { cnpj, subgrupo, classe, subclasse }: Omit<FiltroDeTarifa, 'data'>): void {
+  consulta
     .join('distribuidora', 'distribuidora.id', 'tarifa.distribuidora_id')
-    .where({ 'distribuidora.sigla': sigla, 'tarifa.subgrupo': subgrupo, 'tarifa.modalidade': 'Convencional', 'tarifa.classe': classe, 'tarifa.subclasse': subclasse })
-    .where('tarifa.inicio_vigencia', '<=', data)
+    .where({ 'distribuidora.cnpj': cnpj, 'tarifa.subgrupo': subgrupo, 'tarifa.modalidade': 'Convencional', 'tarifa.classe': classe, 'tarifa.subclasse': subclasse });
+}
+
+export async function buscarTarifaVigente(filtro: FiltroDeTarifa): Promise<TarifaGravada | undefined> {
+  const linha = await db<Tarifa>('tarifa').modify(daDistribuidora, filtro)
+    .where('tarifa.inicio_vigencia', '<=', filtro.data)
     .orderBy('tarifa.inicio_vigencia', 'desc')
     .select(...COLUNAS_DA_TARIFA)
     .first();
   return linha && comoTarifa(linha);
+}
+
+// A vigência mais recente, anterior à data, que tem Fio B publicado (a ANEEL não publica o componente todo ano).
+export async function buscarUltimaTarifaComFioB(filtro: FiltroDeTarifa): Promise<TarifaGravada | undefined> {
+  const linha = await db<Tarifa>('tarifa').modify(daDistribuidora, filtro)
+    .where('tarifa.inicio_vigencia', '<', filtro.data)
+    .whereNotNull('tarifa.fio_b_rs_kwh')
+    .orderBy('tarifa.inicio_vigencia', 'desc')
+    .select(...COLUNAS_DA_TARIFA)
+    .first();
+  return linha && comoTarifa(linha);
+}
+
+// Distribuidoras que podem ser escolhidas: com tarifa vigente ou vencida há pouco (sem tarifa nova importada ainda).
+export async function listarCnpjsComTarifaDesde(data: string): Promise<Set<string>> {
+  const linhas = await db<Tarifa>('tarifa')
+    .join('distribuidora', 'distribuidora.id', 'tarifa.distribuidora_id')
+    .where((condicao) => condicao.whereNull('tarifa.fim_vigencia').orWhere('tarifa.fim_vigencia', '>=', data))
+    .distinct('distribuidora.cnpj');
+  return new Set(linhas.map((linha: { cnpj: string }) => linha.cnpj));
 }

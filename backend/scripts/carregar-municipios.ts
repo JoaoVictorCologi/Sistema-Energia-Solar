@@ -1,4 +1,4 @@
-// Busca no IBGE os municípios da UF atendida (parametros.json) e grava na tabela municipio.
+// Busca no IBGE todos os municípios do Brasil e grava na tabela municipio.
 // Pode rodar de novo: só atualiza. Uso: npm run carregar-municipios
 import { ErroDeConfiguracao, obterEnv } from '../src/config/env.ts';
 
@@ -14,8 +14,8 @@ const { db } = await import('../src/database/conexao.ts');
 const { carregarMunicipios } = await import('../src/services/municipiosService.ts');
 
 try {
-  const { uf, quantidade } = await carregarMunicipios();
-  console.log(`${quantidade} municípios de ${uf} gravados.`);
+  const { quantidade, ufs } = await carregarMunicipios();
+  console.log(`${quantidade} municípios de ${ufs} UFs gravados.`);
 } catch (erro) {
   console.error(erro instanceof Error ? erro.message : erro);
   process.exitCode = 1;

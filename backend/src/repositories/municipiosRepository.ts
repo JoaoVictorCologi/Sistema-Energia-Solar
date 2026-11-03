@@ -15,8 +15,8 @@ export async function salvarMunicipios(municipios: MunicipioParaGravar[]): Promi
   await db<Municipio>('municipio').insert(linhas).onConflict('codigo_ibge').merge(['nome', 'uf', 'atualizado_em']);
 }
 
-export async function listarMunicipiosDaUf(uf: string): Promise<MunicipioParaGravar[]> {
-  const linhas = await db<Municipio>('municipio').select('codigo_ibge', 'nome', 'uf').where({ uf }).orderBy('nome');
+export async function listarTodosOsMunicipios(): Promise<MunicipioParaGravar[]> {
+  const linhas = await db<Municipio>('municipio').select('codigo_ibge', 'nome', 'uf').orderBy(['uf', 'nome']);
   return linhas.map((linha) => ({ codigoIbge: linha.codigo_ibge, nome: linha.nome, uf: linha.uf }));
 }
 

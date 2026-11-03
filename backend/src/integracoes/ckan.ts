@@ -19,7 +19,7 @@ export interface RecursoDoCkan {
 export interface ConsultaAoDatastore {
   recursoId: string;
   // Campos diferentes combinam com E; uma lista no mesmo campo combina com OU.
-  filtros: Record<string, string | string[]>;
+  filtros: Record<string, string | number | (string | number)[]>;
   campos: string[];
   distinct?: boolean;
   tamanhoDaPagina?: number;

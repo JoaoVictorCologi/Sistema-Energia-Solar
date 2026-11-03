@@ -164,8 +164,8 @@ function SecaoPrimeirosPassos() {
             </article>
           ))}
         </div>
-        <Link to="/simulador" className="site-link mt-10">Conheça o simulador solar <span aria-hidden="true">↗</span></Link>
-        <p className="mt-2 text-xs text-muted-foreground">Simulador em construção: o cálculo da economia pela Lei 14.300 chega em breve.</p>
+        <Link to="/simulador" className="site-link mt-10">Simule sua economia <span aria-hidden="true">↗</span></Link>
+        <p className="mt-2 text-xs text-muted-foreground">Estimativa pelas regras da Lei 14.300, com a tarifa da ANEEL e o sol do seu município.</p>
       </div>
     </section>
   );

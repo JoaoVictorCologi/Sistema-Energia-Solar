@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { buscarJson, ErroDeIntegracao } from '../integracoes/http.ts';
-import { buscarMunicipiosDaUf } from '../integracoes/ibge.ts';
+import { buscarMunicipiosDoBrasil } from '../integracoes/ibge.ts';
 
 function respostaJson(corpo: unknown, status = 200): Response {
   return new Response(JSON.stringify(corpo), { status, headers: { 'Content-Type': 'application/json' } });
@@ -52,25 +52,25 @@ describe('buscarJson', () => {
 describe('IBGE', () => {
   afterEach(() => vi.unstubAllGlobals());
 
-  it('busca só os municípios da UF pedida', async () => {
+  it('busca todos os municípios do Brasil numa chamada, na visão nivelada', async () => {
     const fetch = vi.fn().mockResolvedValue(respostaJson([
-      { id: 3530508, nome: 'Mococa', microrregiao: { nome: 'São João da Boa Vista' } },
-      { id: 3516101, nome: 'Florínea', microrregiao: null },
+      { 'municipio-id': 3530508, 'municipio-nome': 'Mococa', 'UF-sigla': 'SP', 'microrregiao-nome': 'São João da Boa Vista' },
+      { 'municipio-id': 5101837, 'municipio-nome': 'Boa Esperança do Norte', 'UF-sigla': 'MT' },
     ]));
     vi.stubGlobal('fetch', fetch);
 
-    const municipios = await buscarMunicipiosDaUf('SP');
+    const municipios = await buscarMunicipiosDoBrasil();
 
-    expect(fetch.mock.calls[0][0]).toBe('https://servicodados.ibge.gov.br/api/v1/localidades/estados/SP/municipios');
+    expect(fetch.mock.calls[0][0]).toBe('https://servicodados.ibge.gov.br/api/v1/localidades/municipios?view=nivelado');
     expect(municipios).toEqual([
       { codigoIbge: 3530508, nome: 'Mococa', uf: 'SP' },
-      { codigoIbge: 3516101, nome: 'Florínea', uf: 'SP' },
+      { codigoIbge: 5101837, nome: 'Boa Esperança do Norte', uf: 'MT' },
     ]);
   });
 
   it('recusa resposta num formato inesperado', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(respostaJson([{ id: '35', nome: 'X' }])));
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(respostaJson([{ id: 35, nome: 'X' }])));
 
-    await expect(buscarMunicipiosDaUf('SP')).rejects.toBeInstanceOf(ErroDeIntegracao);
+    await expect(buscarMunicipiosDoBrasil()).rejects.toBeInstanceOf(ErroDeIntegracao);
   });
 });

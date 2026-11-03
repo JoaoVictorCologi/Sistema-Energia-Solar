@@ -41,7 +41,7 @@ export async function registrarImportacao(job: JobDeImportacao, agora = new Date
       status: resultado.status,
       linhasGravadas: resultado.linhasGravadas,
       versaoDaFonte: resultado.versaoDaFonte ?? null,
-      mensagem: null,
+      mensagem: resultado.mensagem ?? null,
     }, new Date());
   } catch (erro) {
     return finalizarImportacao(importacaoId, { status: 'erro', linhasGravadas: 0, versaoDaFonte: null, mensagem: mensagemDoErro(erro) }, new Date());

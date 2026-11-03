@@ -26,7 +26,7 @@ export interface Municipio {
 export interface Distribuidora {
   id: number;
   sigla: string;
-  cnpj: string | null;
+  cnpj: string;
   nome: string;
   criado_em: Date;
   atualizado_em: Date;
@@ -153,6 +153,17 @@ export interface Proposta {
   investimento: string;
   valida_ate: string;
   snapshot: unknown;
+  criado_em: Date;
+  atualizado_em: Date;
+}
+
+export interface MunicipioDistribuidora {
+  id: number;
+  codigo_ibge: number;
+  distribuidora_id: number;
+  conjuntos: number;
+  sugerida: boolean;
+  importacao_id: number | null;
   criado_em: Date;
   atualizado_em: Date;
 }

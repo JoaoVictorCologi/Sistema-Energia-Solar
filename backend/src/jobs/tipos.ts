@@ -11,6 +11,8 @@ export interface ResultadoDaImportacao {
   linhasGravadas: number;
   // Data de modificação ou hash da fonte: igual à da última execução, o job não baixa nada.
   versaoDaFonte?: string;
+  // Aviso que vai para a tela de importações mesmo com sucesso (ex.: distribuidoras recusadas).
+  mensagem?: string;
 }
 
 export interface JobDeImportacao {

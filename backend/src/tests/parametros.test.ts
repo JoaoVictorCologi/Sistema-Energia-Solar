@@ -10,10 +10,9 @@ function comAlteracao(alterar: (copia: typeof dados) => void): unknown {
 
 describe('parametros.json', () => {
   it('carrega o arquivo do projeto com os valores como Decimal', () => {
-    expect(parametros.uf).toBe('SP');
+    expect(parametros.calibracao).toEqual({ calibrada: false, cnpj: '53859112000169', sigla: 'CPFL Santa Cruz' });
     expect(parametros.fioBPercentualPorAno['2026'].toString()).toBe('0.6');
     expect(parametros.consumoMinimoKwh.bifasico.toNumber()).toBe(50);
-    expect(parametros.impostos.icmsFaixas.at(-1)?.ateKwh).toBeNull();
   });
 
   it('recusa valor fora da faixa, dizendo qual campo corrigir', () => {
@@ -24,15 +23,5 @@ describe('parametros.json', () => {
   it('recusa número sem aspas, que perderia precisão', () => {
     const invalido = comAlteracao((copia) => { (copia as Record<string, unknown>).custoReferenciaPorKwp = 4000; });
     expect(() => lerParametros(invalido)).toThrow(/custoReferenciaPorKwp/);
-  });
-
-  it('recusa impostos que somam 0,5 ou mais', () => {
-    const invalido = comAlteracao((copia) => { copia.impostos.cofins = '0.40'; });
-    expect(() => lerParametros(invalido)).toThrow(/ICMS \+ PIS \+ COFINS/);
-  });
-
-  it('exige uma última faixa de ICMS sem limite', () => {
-    const invalido = comAlteracao((copia) => { copia.impostos.icmsFaixas = [{ ateKwh: '200', aliquota: '0.12' }]; });
-    expect(() => lerParametros(invalido)).toThrow(/ateKwh nulo/);
   });
 });
