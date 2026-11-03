@@ -46,7 +46,7 @@ function escolherInversor(potencia: Kwp, inversoresKw: Decimal[]): Pick<Dimensio
 
   const alertas: Alerta[] = [];
   if (!distanciaDaFaixa(escolhida.razaoCcCa).isZero()) {
-    alertas.push({ codigo: 'RAZAO_CC_CA_FORA_DA_FAIXA', mensagem: `Razão CC/CA de ${escolhida.razaoCcCa.toDecimalPlaces(2)}, fora da faixa de 1,15 a 1,35.` });
+    alertas.push({ codigo: 'RAZAO_CC_CA_FORA_DA_FAIXA', mensagem: `Razão CC/CA de ${escolhida.razaoCcCa.toFixed(2).replace('.', ',')}, fora da faixa de 1,15 a 1,35.` });
   }
   if (escolhida.razaoCcCa.gt(RAZAO_DE_CEIFAMENTO)) {
     alertas.push({ codigo: 'CEIFAMENTO', mensagem: 'Razão CC/CA acima de 1,40: parte da geração nos horários de pico se perde no inversor.' });

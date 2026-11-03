@@ -19,3 +19,8 @@ export async function listarMunicipiosDaUf(uf: string): Promise<MunicipioParaGra
   const linhas = await db<Municipio>('municipio').select('codigo_ibge', 'nome', 'uf').where({ uf }).orderBy('nome');
   return linhas.map((linha) => ({ codigoIbge: linha.codigo_ibge, nome: linha.nome, uf: linha.uf }));
 }
+
+export async function buscarMunicipio(codigoIbge: number): Promise<MunicipioParaGravar | undefined> {
+  const linha = await db<Municipio>('municipio').select('codigo_ibge', 'nome', 'uf').where({ codigo_ibge: codigoIbge }).first();
+  return linha && { codigoIbge: linha.codigo_ibge, nome: linha.nome, uf: linha.uf };
+}

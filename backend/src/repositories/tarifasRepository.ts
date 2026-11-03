@@ -26,6 +26,11 @@ export interface GravacaoDeTarifas {
   importacaoId: number;
 }
 
+const COLUNAS_DA_TARIFA = [
+  'tarifa.id', 'tarifa.subgrupo', 'tarifa.modalidade', 'tarifa.classe', 'tarifa.subclasse', 'tarifa.te_rs_kwh',
+  'tarifa.tusd_rs_kwh', 'tarifa.fio_b_rs_kwh', 'tarifa.inicio_vigencia', 'tarifa.fim_vigencia',
+];
+
 function comoTarifa(linha: Tarifa): TarifaGravada {
   return {
     id: linha.id,
@@ -61,10 +66,7 @@ export async function listarTarifasDaDistribuidora(sigla: string): Promise<Tarif
   const linhas = await db<Tarifa>('tarifa')
     .join('distribuidora', 'distribuidora.id', 'tarifa.distribuidora_id')
     .where('distribuidora.sigla', sigla)
-    .select(
-      'tarifa.id', 'tarifa.subgrupo', 'tarifa.modalidade', 'tarifa.classe', 'tarifa.subclasse', 'tarifa.te_rs_kwh',
-      'tarifa.tusd_rs_kwh', 'tarifa.fio_b_rs_kwh', 'tarifa.inicio_vigencia', 'tarifa.fim_vigencia',
-    );
+    .select(...COLUNAS_DA_TARIFA);
   return linhas.map(comoTarifa);
 }
 
@@ -84,4 +86,24 @@ export async function gravarTarifas({ distribuidora, novas, alteradas, importaca
       await transacao<Tarifa>('tarifa').where({ id: tarifa.id }).update(comoLinha(tarifa, importacaoId, agora));
     }
   });
+}
+
+export interface FiltroDeTarifa {
+  sigla: string;
+  subgrupo: string;
+  classe: string;
+  subclasse: string;
+  // 'AAAA-MM-DD': a tarifa vigente nessa data (ou, se a vigência venceu sem tarifa nova, a mais recente).
+  data: string;
+}
+
+export async function buscarTarifaVigente({ sigla, subgrupo, classe, subclasse, data }: FiltroDeTarifa): Promise<TarifaGravada | undefined> {
+  const linha = await db<Tarifa>('tarifa')
+    .join('distribuidora', 'distribuidora.id', 'tarifa.distribuidora_id')
+    .where({ 'distribuidora.sigla': sigla, 'tarifa.subgrupo': subgrupo, 'tarifa.modalidade': 'Convencional', 'tarifa.classe': classe, 'tarifa.subclasse': subclasse })
+    .where('tarifa.inicio_vigencia', '<=', data)
+    .orderBy('tarifa.inicio_vigencia', 'desc')
+    .select(...COLUNAS_DA_TARIFA)
+    .first();
+  return linha && comoTarifa(linha);
 }

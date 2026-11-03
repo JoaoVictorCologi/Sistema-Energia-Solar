@@ -33,6 +33,14 @@ const esquemaParametros = z.object({
   degradacaoAnualPadrao: decimal('0.002', '0.01'),
   simultaneidade: z.object({ B1: decimal('0.10', '0.70'), B2: decimal('0.10', '0.70'), B3: decimal('0.10', '0.70') }),
   custoReferenciaPorKwp: decimal('0.01', '100000'),
+  coberturaAlvo: decimal('0.5', '1.2'),
+  horizonteAnos: z.number().int().min(1).max(40),
+  validadeDosCreditosMeses: z.number().int().min(1).max(120),
+  icmsSobreFioB: z.boolean(),
+  moduloReferencia: z.object({ potenciaW: decimal('100', '800') }),
+  inversoresReferenciaKw: z.array(decimal('0.5', '1000')).min(1),
+  operacaoManutencaoAnual: decimal('0', '0.03'),
+  trocaDoInversor: z.object({ ano: z.number().int().min(10).max(15), fracaoDoInvestimento: decimal('0', '0.5') }),
   fontes: z.record(z.string(), z.string()),
 }).refine(
   // Tributos "por dentro": a tarifa é dividida por (1 − soma), que precisa ficar longe de zero.

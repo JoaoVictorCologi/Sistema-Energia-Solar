@@ -1,4 +1,4 @@
-import type { Decimal } from 'decimal.js';
+import { Decimal } from 'decimal.js';
 import { db } from '../database/conexao.ts';
 import type { IndicadorEconomico } from '../tipos/tabelas.ts';
 
@@ -19,4 +19,9 @@ export async function gravarIndicadores(indicadores: IndicadorParaGravar[], impo
   const linhas = indicadores.map(({ serie, data, valor }) => ({ serie, data, valor: valor.toString(), importacao_id: importacaoId }));
   const inseridas = await db<IndicadorEconomico>('indicador_economico').insert(linhas).onConflict(['serie', 'data']).ignore().returning('id');
   return inseridas.length;
+}
+
+export async function buscarUltimoIndicador(serie: number): Promise<{ data: string; valor: Decimal } | undefined> {
+  const linha = await db<IndicadorEconomico>('indicador_economico').select('data', 'valor').where({ serie }).orderBy('data', 'desc').first();
+  return linha && { data: linha.data, valor: new Decimal(linha.valor) };
 }

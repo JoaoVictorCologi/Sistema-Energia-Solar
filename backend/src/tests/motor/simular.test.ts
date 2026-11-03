@@ -90,6 +90,13 @@ describe('simular', () => {
     expect(pequeno.alertas.map((alerta) => alerta.codigo)).toContain('CONSUMO_ABAIXO_DO_MINIMO');
   });
 
+  it('não avisa créditos vencidos pela pequena sobra de arredondar os módulos', () => {
+    // 455 kWh por mês pedem 6,97 módulos: os 7 instalados sobram só 0,4%.
+    const justo = simular(entradaDoExemplo({ consumoMensal: doze(kwh(455)) }));
+    expect(justo.dimensionamento.numeroModulos).toBe(7);
+    expect(justo.alertas.map((alerta) => alerta.codigo)).not.toContain('CREDITOS_VENCIDOS');
+  });
+
   it('avisa créditos vencidos quando o sistema gera muito mais que o consumo', () => {
     const superdimensionado = simular(entradaDoExemplo({ premissas: { ...entradaDoExemplo().premissas, coberturaAlvo: fracao('2') } }));
     expect(superdimensionado.alertas.map((alerta) => alerta.codigo)).toContain('CREDITOS_VENCIDOS');

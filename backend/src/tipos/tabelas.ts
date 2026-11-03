@@ -112,3 +112,17 @@ export interface Cliente {
   criado_em: Date;
   atualizado_em: Date;
 }
+
+export interface Simulacao {
+  id: number;
+  codigo: string;
+  cep: string;
+  codigo_ibge: number;
+  tarifa_id: number;
+  irradiacao_id: number;
+  versao_parametros: string;
+  entrada: unknown;
+  resultado: unknown;
+  criado_em: Date;
+  atualizado_em: Date;
+}

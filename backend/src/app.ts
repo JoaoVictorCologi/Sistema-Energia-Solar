@@ -8,6 +8,7 @@ import { routersDosModulos } from './modulos/index.ts';
 import { criarRotasAuth } from './routes/auth.ts';
 import { rotasImportacoes } from './routes/importacoes.ts';
 import { rotasSaude } from './routes/saude.ts';
+import { criarRotasSimulacao } from './routes/simulacao.ts';
 
 function criarRotasDaApi(): Router {
   const api = Router();
@@ -15,6 +16,7 @@ function criarRotasDaApi(): Router {
   api.use(rotasSaude);
   api.use(criarRotasAuth());
   api.use(rotasImportacoes);
+  api.use(criarRotasSimulacao());
   for (const routerDoModulo of routersDosModulos) {
     api.use(routerDoModulo);
   }

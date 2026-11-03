@@ -1,4 +1,4 @@
-import type { Decimal } from 'decimal.js';
+import { Decimal } from 'decimal.js';
 import { db } from '../database/conexao.ts';
 import type { IrradiacaoMunicipio } from '../tipos/tabelas.ts';
 
@@ -27,4 +27,19 @@ export async function salvarIrradiacoes(irradiacoes: IrradiacaoParaGravar[]): Pr
     .insert(irradiacoes.map((irradiacao) => comoLinha(irradiacao, agora)))
     .onConflict('codigo_ibge')
     .merge(['hsp_anual', ...COLUNAS_DOS_MESES, 'atualizado_em']);
+}
+
+export interface IrradiacaoGravada {
+  id: number;
+  hspAnual: Decimal;
+  hspMensal: Decimal[];
+}
+
+export async function buscarIrradiacaoDoMunicipio(codigoIbge: number): Promise<IrradiacaoGravada | undefined> {
+  const linha = await db<IrradiacaoMunicipio>('irradiacao_municipio')
+    .select('id', 'hsp_anual', ...COLUNAS_DOS_MESES)
+    .where({ codigo_ibge: codigoIbge })
+    .first();
+  if (!linha) return undefined;
+  return { id: linha.id, hspAnual: new Decimal(linha.hsp_anual), hspMensal: COLUNAS_DOS_MESES.map((coluna) => new Decimal(linha[coluna])) };
 }

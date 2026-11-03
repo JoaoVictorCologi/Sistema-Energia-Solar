@@ -66,6 +66,9 @@ export interface ResultadoSimulacao {
   alertas: Alerta[];
 }
 
+// Arredondar os módulos para cima já sobra um pouco de energia; só avisa quando vence mais de 1% da geração.
+const LIMITE_DE_CREDITOS_VENCIDOS = new Decimal('0.01');
+
 export function percentualFioB(tabela: Record<number, Fracao>, anoCivil: number): Fracao {
   const anos = Object.keys(tabela).map(Number).sort((a, b) => a - b);
   const anoDaTabela = anos.filter((ano) => ano <= anoCivil).at(-1);
@@ -125,7 +128,8 @@ function alertasDaSimulacao(entrada: EntradaSimulacao, meses: MesSimulado[], ind
   if (Decimal.sum(...entrada.consumoMensal).div(12).lt(entrada.premissas.consumoMinimo)) {
     alertas.push({ codigo: 'CONSUMO_ABAIXO_DO_MINIMO', mensagem: 'O consumo médio está abaixo do mínimo da ligação: a conta já é a mínima e o sistema dificilmente compensa.' });
   }
-  if (meses.some((mes) => mes.creditosVencidos.gt(0))) {
+  const vencidos = Decimal.sum(...meses.map((mes) => mes.creditosVencidos));
+  if (vencidos.gt(Decimal.sum(...meses.map((mes) => mes.geracao)).times(LIMITE_DE_CREDITOS_VENCIDOS))) {
     alertas.push({ codigo: 'CREDITOS_VENCIDOS', mensagem: 'Parte dos créditos vence sem uso: o sistema gera mais do que a casa consome.' });
   }
   if (indicadores.tir === null) alertas.push({ codigo: 'TIR_NAO_CALCULAVEL', mensagem: 'O investimento não se paga no horizonte simulado.' });

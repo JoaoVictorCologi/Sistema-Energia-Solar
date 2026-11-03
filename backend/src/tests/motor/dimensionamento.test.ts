@@ -46,6 +46,7 @@ describe('dimensionamento', () => {
 
     expect(resultado.razaoCcCa?.toString()).toBe('1.925');
     expect(resultado.alertas.map((alerta) => alerta.codigo)).toEqual(['RAZAO_CC_CA_FORA_DA_FAIXA', 'CEIFAMENTO']);
+    expect(resultado.alertas[0].mensagem).toBe('Razão CC/CA de 1,93, fora da faixa de 1,15 a 1,35.');
   });
 
   it('sem inversores, não escolhe nenhum e avisa', () => {
