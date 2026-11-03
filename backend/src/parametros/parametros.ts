@@ -41,6 +41,7 @@ const esquemaParametros = z.object({
   inversoresReferenciaKw: z.array(decimal('0.5', '1000')).min(1),
   operacaoManutencaoAnual: decimal('0', '0.03'),
   trocaDoInversor: z.object({ ano: z.number().int().min(10).max(15), fracaoDoInvestimento: decimal('0', '0.5') }),
+  proposta: z.object({ instalacaoPorKwp: decimal('0', '10000'), margem: decimal('0', '1'), validadeDias: z.number().int().min(1).max(90) }),
   fontes: z.record(z.string(), z.string()),
 }).refine(
   // Tributos "por dentro": a tarifa é dividida por (1 − soma), que precisa ficar longe de zero.

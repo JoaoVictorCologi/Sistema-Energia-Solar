@@ -66,6 +66,11 @@
     "ano": 12,
     "fracaoDoInvestimento": "0.15"
   },
+  "proposta": {
+    "instalacaoPorKwp": "700.00",
+    "margem": "0.20",
+    "validadeDias": 10
+  },
   "fontes": {
     "uf": "Mococa-SP, sede da empresa. A confirmar com a equipe.",
     "distribuidoraPadrao": "SigAgente exato da ANEEL. A CPFL Santa Cruz (CNPJ 53.859.112/0001-69) atende Mococa desde 22/03/2018, quando incorporou a CPFL Mococa (conferido na API da ANEEL em 03/11/2026).",
@@ -83,6 +88,7 @@
     "moduloReferencia": "Módulo usado na simulação pública enquanto o catálogo (tarefa 14) não existe. A calibrar com os preços da equipe.",
     "inversoresReferenciaKw": "Potências CA de inversores comuns no mercado, para escolher o da simulação pública (tarefa 14 troca pelo catálogo).",
     "operacaoManutencaoAnual": "Sugestão inicial da especificação do motor: 0,5% do investimento por ano. A ajustar com orçamento real.",
-    "trocaDoInversor": "Troca no ano 12 (vida útil típica); custo estimado em 15% do investimento enquanto não há preço do catálogo. A calibrar."
+    "trocaDoInversor": "Troca no ano 12 (vida útil típica); custo estimado em 15% do investimento enquanto não há preço do catálogo. A calibrar.",
+    "proposta": "Preço da proposta = (módulos + inversor do catálogo + instalação por kWp) × (1 + margem); validade de 10 dias (Plano 1, tarefa 14). Instalação e margem ilustrativas, a calibrar com a equipe."
   }
 }

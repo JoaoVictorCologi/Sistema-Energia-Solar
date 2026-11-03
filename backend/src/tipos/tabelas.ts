@@ -127,3 +127,32 @@ export interface Simulacao {
   criado_em: Date;
   atualizado_em: Date;
 }
+
+export type TipoDeEquipamento = 'modulo' | 'inversor';
+
+export interface Equipamento {
+  id: number;
+  tipo: TipoDeEquipamento;
+  fabricante: string;
+  modelo: string;
+  potencia_w: string;
+  degradacao_anual: string | null;
+  preco: string;
+  ativo: boolean;
+  criado_em: Date;
+  atualizado_em: Date;
+}
+
+export type StatusDaProposta = 'enviada' | 'aceita' | 'recusada';
+
+export interface Proposta {
+  id: number;
+  cliente_id: number;
+  simulacao_id: number;
+  status: StatusDaProposta;
+  investimento: string;
+  valida_ate: string;
+  snapshot: unknown;
+  criado_em: Date;
+  atualizado_em: Date;
+}

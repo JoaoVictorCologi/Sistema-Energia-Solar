@@ -33,7 +33,7 @@ const CLASSE_DO_SUBGRUPO: Record<Subgrupo, { classe: string; subclasse: string }
 const SERIE_IPCA_12_MESES = 13522;
 const SERIE_SELIC_META = 432;
 
-interface Referencias {
+export interface Referencias {
   tarifa: TarifaGravada & { fioB: Decimal };
   irradiacao: IrradiacaoGravada;
   reajusteAnual: Decimal;
@@ -44,10 +44,10 @@ function dadosIndisponiveis(): ErroHttp {
   return new ErroHttp(503, 'SIMULACAO_INDISPONIVEL', 'O simulador está sem os dados de referência no momento. Tente mais tarde.');
 }
 
-async function buscarReferencias(local: LocalDoCep, subgrupo: Subgrupo, hoje: string): Promise<Referencias> {
+export async function buscarReferencias(codigoIbge: number, subgrupo: Subgrupo, hoje: string): Promise<Referencias> {
   const [tarifa, irradiacao, ipca, selic] = await Promise.all([
     buscarTarifaVigente({ sigla: parametros.distribuidoraPadrao, subgrupo, ...CLASSE_DO_SUBGRUPO[subgrupo], data: hoje }),
-    buscarIrradiacaoDoMunicipio(local.codigoIbge),
+    buscarIrradiacaoDoMunicipio(codigoIbge),
     buscarUltimoIndicador(SERIE_IPCA_12_MESES),
     buscarUltimoIndicador(SERIE_SELIC_META),
   ]);
@@ -66,7 +66,15 @@ function mesSeguinte(hoje: string): { ano: number; mes: number } {
   return mes === 12 ? { ano: ano + 1, mes: 1 } : { ano, mes: mes + 1 };
 }
 
-function montarPremissas(pedido: PedidoDeSimulacao, referencias: Referencias, investimento: Decimal): PremissasDaSimulacao {
+// O que muda entre a simulação pública (referências do parametros.json) e a proposta (catálogo com preço).
+export interface EquipamentosDaEntrada {
+  modulo: { potenciaW: Decimal; degradacaoAnual: Decimal };
+  inversoresKw: Decimal[];
+  investimento: Decimal;
+  custoDaTrocaDoInversor: Decimal;
+}
+
+function montarPremissas(pedido: PedidoDeSimulacao, referencias: Referencias, custoDaTrocaDoInversor: Decimal): PremissasDaSimulacao {
   return {
     performanceRatio: fracao(parametros.performanceRatio),
     simultaneidade: fracao(parametros.simultaneidade[pedido.subgrupo]),
@@ -78,38 +86,52 @@ function montarPremissas(pedido: PedidoDeSimulacao, referencias: Referencias, in
     taxaDesconto: fracao(referencias.taxaDesconto),
     horizonteAnos: parametros.horizonteAnos,
     operacaoManutencaoAnual: fracao(parametros.operacaoManutencaoAnual),
-    trocaDoInversor: { ano: parametros.trocaDoInversor.ano, custo: reais(investimento.times(parametros.trocaDoInversor.fracaoDoInvestimento)) },
+    trocaDoInversor: { ano: parametros.trocaDoInversor.ano, custo: reais(custoDaTrocaDoInversor) },
   };
 }
 
 // Estimativa da simulação pública (kWp × custo de referência); a tela avisa "valor final na proposta".
-function estimarInvestimento(pedido: PedidoDeSimulacao, referencias: Referencias): Decimal {
-  const { kwpInstalado } = dimensionar({
-    consumoMensal: Array.from({ length: 12 }, () => kwh(pedido.consumoMedioKwh)), hspMensal: referencias.irradiacao.hspMensal,
-    performanceRatio: fracao(parametros.performanceRatio), coberturaAlvo: fracao(parametros.coberturaAlvo),
-    potenciaModuloW: parametros.moduloReferencia.potenciaW, inversoresKw: [],
-  });
-  return kwpInstalado.times(parametros.custoReferenciaPorKwp);
+function equipamentosDeReferencia(pedido: PedidoDeSimulacao, referencias: Referencias): EquipamentosDaEntrada {
+  const { kwpInstalado } = dimensionarPedido(pedido, referencias, parametros.moduloReferencia.potenciaW, []);
+  const investimento = kwpInstalado.times(parametros.custoReferenciaPorKwp);
+  return {
+    modulo: { potenciaW: parametros.moduloReferencia.potenciaW, degradacaoAnual: parametros.degradacaoAnualPadrao },
+    inversoresKw: parametros.inversoresReferenciaKw,
+    investimento,
+    custoDaTrocaDoInversor: investimento.times(parametros.trocaDoInversor.fracaoDoInvestimento),
+  };
 }
 
-function montarEntrada(pedido: PedidoDeSimulacao, referencias: Referencias, hoje: string): EntradaSimulacao {
+// Mesmo dimensionamento que o motor fará: a proposta precisa do número de módulos para calcular o preço.
+export function dimensionarPedido(pedido: PedidoDeSimulacao, referencias: Referencias, potenciaModuloW: Decimal, inversoresKw: Decimal[]) {
+  return dimensionar({
+    consumoMensal: Array.from({ length: 12 }, () => kwh(pedido.consumoMedioKwh)), hspMensal: referencias.irradiacao.hspMensal,
+    performanceRatio: fracao(parametros.performanceRatio), coberturaAlvo: fracao(parametros.coberturaAlvo), potenciaModuloW, inversoresKw,
+  });
+}
+
+export function montarEntrada(
+  pedido: PedidoDeSimulacao,
+  referencias: Referencias,
+  hoje: string,
+  equipamentos: EquipamentosDaEntrada = equipamentosDeReferencia(pedido, referencias),
+): EntradaSimulacao {
   const { tarifa } = referencias;
-  const investimento = estimarInvestimento(pedido, referencias);
   return {
     consumoMensal: Array.from({ length: 12 }, () => kwh(pedido.consumoMedioKwh)),
     hspMensal: referencias.irradiacao.hspMensal,
     tarifa: { te: reaisPorKwh(tarifa.te), tusd: reaisPorKwh(tarifa.tusd), fioB: reaisPorKwh(tarifa.fioB), adicionalBandeira: reaisPorKwh(0) },
     tributos: { icms: fracao(aliquotaDeIcms(pedido.consumoMedioKwh)), pis: fracao(parametros.impostos.pis), cofins: fracao(parametros.impostos.cofins), icmsSobreFioB: parametros.icmsSobreFioB },
-    modulo: { potenciaW: parametros.moduloReferencia.potenciaW, degradacaoAnual: fracao(parametros.degradacaoAnualPadrao) },
-    inversoresKw: parametros.inversoresReferenciaKw,
-    investimento: reais(investimento),
+    modulo: { potenciaW: equipamentos.modulo.potenciaW, degradacaoAnual: fracao(equipamentos.modulo.degradacaoAnual) },
+    inversoresKw: equipamentos.inversoresKw,
+    investimento: reais(equipamentos.investimento),
     inicio: mesSeguinte(hoje),
     regime: 'GD_II',
-    premissas: montarPremissas(pedido, referencias, investimento),
+    premissas: montarPremissas(pedido, referencias, equipamentos.custoDaTrocaDoInversor),
   };
 }
 
-function alertaDeTarifaVencida(tarifa: TarifaGravada, hoje: string): Alerta[] {
+export function alertaDeTarifaVencida(tarifa: TarifaGravada, hoje: string): Alerta[] {
   if (!tarifa.fimVigencia || tarifa.fimVigencia >= hoje) return [];
   return [{ codigo: 'TARIFA_DESATUALIZADA', mensagem: `A tarifa usada venceu em ${tarifa.fimVigencia}; a nova ainda não foi importada da ANEEL.` }];
 }
@@ -118,7 +140,7 @@ export async function simularEconomia(pedido: PedidoDeSimulacao, agora = new Dat
   const local = await consultarCep(pedido.cep);
   if (!local.atendido) throw new ErroHttp(422, 'REGIAO_NAO_ATENDIDA', `Região ainda não atendida. Por enquanto, o simulador atende só o estado de ${parametros.uf}.`);
   const hoje = hojeEmSaoPaulo(agora);
-  const referencias = await buscarReferencias(local, pedido.subgrupo, hoje);
+  const referencias = await buscarReferencias(local.codigoIbge, pedido.subgrupo, hoje);
   const entrada = montarEntrada(pedido, referencias, hoje);
   const resultado = simular(entrada);
   resultado.alertas.push(...alertaDeTarifaVencida(referencias.tarifa, hoje));

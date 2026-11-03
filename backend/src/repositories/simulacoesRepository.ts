@@ -17,3 +17,9 @@ export type SimulacaoDoCliente = Pick<Simulacao, 'id' | 'codigo' | 'criado_em' |
 export async function listarSimulacoesDoCliente(clienteId: number): Promise<SimulacaoDoCliente[]> {
   return db<Simulacao>('simulacao').select('id', 'codigo', 'criado_em', 'resultado').where({ cliente_id: clienteId }).orderBy('criado_em', 'desc');
 }
+
+export type SimulacaoGravada = Pick<Simulacao, 'id' | 'cliente_id' | 'codigo_ibge' | 'entrada' | 'resultado'>;
+
+export async function buscarSimulacaoPorCodigo(codigo: string): Promise<SimulacaoGravada | undefined> {
+  return db<Simulacao>('simulacao').select('id', 'cliente_id', 'codigo_ibge', 'entrada', 'resultado').where({ codigo }).first();
+}

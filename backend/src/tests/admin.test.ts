@@ -1,15 +1,18 @@
+import { Decimal } from 'decimal.js';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { criarApp } from '../app.ts';
 import { buscarClientePorId, listarClientes } from '../repositories/clientesRepository.ts';
 import { listarUltimasImportacoes } from '../repositories/importacoesRepository.ts';
 import { contarTotais } from '../repositories/painelRepository.ts';
+import { contarPropostasPorStatus, listarPropostas } from '../repositories/propostasRepository.ts';
 import { listarSimulacoesDoCliente } from '../repositories/simulacoesRepository.ts';
 import { gerarToken } from '../services/authService.ts';
 
 vi.mock('../repositories/clientesRepository.ts', () => ({ buscarClientePorId: vi.fn(), listarClientes: vi.fn() }));
 vi.mock('../repositories/importacoesRepository.ts', () => ({ listarUltimasImportacoes: vi.fn() }));
 vi.mock('../repositories/painelRepository.ts', () => ({ contarTotais: vi.fn() }));
+vi.mock('../repositories/propostasRepository.ts', () => ({ contarPropostasPorStatus: vi.fn(), listarPropostas: vi.fn() }));
 vi.mock('../repositories/simulacoesRepository.ts', () => ({ listarSimulacoesDoCliente: vi.fn() }));
 
 const ADMIN = `sessao=${gerarToken({ id: 1, papel: 'admin' })}`;
@@ -31,6 +34,11 @@ beforeEach(() => {
   vi.mocked(listarSimulacoesDoCliente).mockResolvedValue([{ id: 3, codigo: 'a1f8', criado_em: CRIADO_EM, resultado: RESULTADO_GRAVADO }]);
   vi.mocked(contarTotais).mockResolvedValue({ clientes: 4, simulacoes: 10, simulacoesComPedido: 4 });
   vi.mocked(listarUltimasImportacoes).mockResolvedValue([]);
+  vi.mocked(contarPropostasPorStatus).mockResolvedValue({ enviada: 2, aceita: 1, recusada: 0 });
+  vi.mocked(listarPropostas).mockResolvedValue({
+    propostas: [{ id: 5, clienteId: 7, clienteNome: 'Maria', status: 'enviada', investimento: new Decimal('12012'), validaAte: '2026-11-13', criadoEm: CRIADO_EM }],
+    total: 1,
+  });
 });
 
 describe('acesso à área restrita', () => {
@@ -49,7 +57,7 @@ describe('GET /api/admin/painel', () => {
     const resposta = await request(criarApp()).get('/api/admin/painel').set('Cookie', ADMIN);
 
     expect(resposta.body.painel).toEqual({
-      clientes: 4, simulacoes: 10, simulacoesComPedido: 4,
+      clientes: 4, simulacoes: 10, simulacoesComPedido: 4, propostasPorStatus: { enviada: 2, aceita: 1, recusada: 0 },
       ultimaImportacaoDeTarifas: { status: 'sem_alteracao', finalizadaEm: CRIADO_EM.toISOString() },
     });
   });
@@ -92,6 +100,8 @@ describe('GET /api/admin/clientes/:id', () => {
       codigo: 'a1f8', criadaEm: CRIADO_EM.toISOString(), cidade: 'Mococa', tipoLigacao: 'monofasico',
       consumoMedioKwh: 400, kwpInstalado: 3.3, investimentoEstimado: 13200, economiaMensalMedia: 352.28,
     }]);
+    expect(listarPropostas).toHaveBeenCalledWith({ clienteId: 7, pagina: 1, porPagina: 100 });
+    expect(resposta.body.propostas).toEqual([{ id: 5, status: 'enviada', investimento: 12012, validaAte: '2026-11-13', vencida: expect.any(Boolean), criadoEm: CRIADO_EM.toISOString() }]);
   });
 
   it('id inexistente → 404', async () => {

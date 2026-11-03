@@ -3,8 +3,10 @@ import { ErroHttp } from '../middlewares/erros.ts';
 import { buscarClientePorId, listarClientes, type ClienteResumo } from '../repositories/clientesRepository.ts';
 import { listarUltimasImportacoes } from '../repositories/importacoesRepository.ts';
 import { contarTotais } from '../repositories/painelRepository.ts';
+import { contarPropostasPorStatus } from '../repositories/propostasRepository.ts';
 import { listarSimulacoesDoCliente, type SimulacaoDoCliente } from '../repositories/simulacoesRepository.ts';
 import type { SimulacaoFormatada } from './simulacaoFormato.ts';
+import { buscarPropostas } from './propostasService.ts';
 import { TIPO_TARIFAS_ANEEL } from './tarifasAneelService.ts';
 
 function comoClienteDaLista(cliente: ClienteResumo) {
@@ -27,10 +29,11 @@ function comoResumoDaSimulacao({ codigo, criado_em, resultado }: SimulacaoDoClie
 }
 
 export async function montarPainel() {
-  const [totais, ultimas] = await Promise.all([contarTotais(), listarUltimasImportacoes()]);
+  const [totais, propostasPorStatus, ultimas] = await Promise.all([contarTotais(), contarPropostasPorStatus(), listarUltimasImportacoes()]);
   const tarifas = ultimas.find((importacao) => importacao.tipo === TIPO_TARIFAS_ANEEL);
   return {
     ...totais,
+    propostasPorStatus,
     ultimaImportacaoDeTarifas: tarifas ? { status: tarifas.status, finalizadaEm: tarifas.finalizada_em } : null,
   };
 }
@@ -43,9 +46,10 @@ export async function buscarClientes(filtro: { busca?: string; pagina: number; p
 export async function detalharCliente(id: number) {
   const cliente = await buscarClientePorId(id);
   if (!cliente) throw new ErroHttp(404, 'CLIENTE_NAO_ENCONTRADO', 'Cliente não encontrado.');
-  const simulacoes = await listarSimulacoesDoCliente(id);
+  const [simulacoes, { propostas }] = await Promise.all([listarSimulacoesDoCliente(id), buscarPropostas({ clienteId: id, pagina: 1, porPagina: 100 })]);
   return {
     cliente: { ...comoClienteDaLista(cliente), cep: cliente.cep, aceiteEm: cliente.aceite_em },
     simulacoes: simulacoes.map(comoResumoDaSimulacao),
+    propostas: propostas.map(({ id: propostaId, status, investimento, validaAte, vencida, criadoEm }) => ({ id: propostaId, status, investimento, validaAte, vencida, criadoEm })),
   };
 }

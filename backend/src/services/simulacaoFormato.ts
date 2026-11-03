@@ -8,7 +8,7 @@ import type { LocalDoCep } from './cepService.ts';
 import type { PedidoDeSimulacao } from './simulacaoService.ts';
 
 export interface ContextoDaSimulacao {
-  local: LocalDoCep;
+  local: Pick<LocalDoCep, 'cidade' | 'uf'>;
   pedido: PedidoDeSimulacao;
   tarifa: TarifaGravada;
   distribuidora: string;
