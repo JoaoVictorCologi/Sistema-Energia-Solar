@@ -1,5 +1,6 @@
-import { useState, type FormEvent, type InputHTMLAttributes } from 'react';
+import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router';
+import { CaixaDeAceite, CampoDeTexto, GrupoDeOpcoes } from '../../../components/formulario/Campos.tsx';
 import { linkDoWhatsApp } from '../../../dados/empresa.ts';
 import { solucoes } from '../../../dados/solucoes.ts';
 
@@ -42,26 +43,6 @@ function montarMensagem(dados: DadosDoContato): string {
   ];
   if (dados.consumoOuConta.trim()) linhas.push(`Consumo/conta: ${dados.consumoOuConta.trim()}`);
   return linhas.join('\n');
-}
-
-const classeDoCampo =
-  'mt-2 block min-h-12 w-full rounded-sm border border-border bg-white px-3 text-base text-brand-ink aria-[invalid=true]:border-red-700';
-
-function MensagemDeErro({ id, texto }: { id: string; texto?: string }) {
-  return texto ? <p id={id} className="mt-1 text-sm text-red-800">{texto}</p> : null;
-}
-
-function CampoDeTexto({ id, rotulo, erro, ...propriedades }: { id: string; rotulo: string; erro?: string } & InputHTMLAttributes<HTMLInputElement>) {
-  return (
-    <div>
-      <label htmlFor={id} className="block text-sm font-semibold text-brand-ink">{rotulo}</label>
-      <input
-        id={id} aria-invalid={Boolean(erro)} aria-describedby={erro ? `erro-${id}` : undefined}
-        className={classeDoCampo} {...propriedades}
-      />
-      <MensagemDeErro id={`erro-${id}`} texto={erro} />
-    </div>
-  );
 }
 
 function MensagemPronta({ link }: { link: string }) {
@@ -113,19 +94,9 @@ export function FormularioContato({ perfilInicial = '', compacto = false }: { pe
                 erro={erros.telefone} onChange={(evento) => alterar('telefone', evento.target.value)} />
             </div>
 
-            <fieldset aria-describedby={erros.perfil ? 'erro-perfil' : undefined}>
-              <legend className="text-sm font-semibold text-brand-ink">Perfil do projeto solar</legend>
-              <div className="mt-2 grid grid-cols-1 gap-3 min-[380px]:grid-cols-2">
-                {solucoes.map((solucao) => (
-                  <label key={solucao.slug} className="flex min-h-12 cursor-pointer items-center gap-3 rounded-md border border-border bg-white px-3 text-sm has-[:checked]:border-brand-blue has-[:checked]:text-brand-blue">
-                    <input type="radio" name="perfil" value={solucao.slug} checked={dados.perfil === solucao.slug}
-                      onChange={() => alterar('perfil', solucao.slug)} className="size-4 accent-brand-blue" />
-                    {solucao.titulo}
-                  </label>
-                ))}
-              </div>
-              <MensagemDeErro id="erro-perfil" texto={erros.perfil} />
-            </fieldset>
+            <GrupoDeOpcoes nome="perfil" legenda="Perfil do projeto solar" valor={dados.perfil} erro={erros.perfil}
+              opcoes={solucoes.map((solucao) => ({ valor: solucao.slug, rotulo: solucao.titulo }))}
+              aoMudar={(perfil) => alterar('perfil', perfil)} />
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <CampoDeTexto id="cidade" rotulo="Cidade" autoComplete="address-level2" value={dados.cidade} erro={erros.cidade}
@@ -135,16 +106,11 @@ export function FormularioContato({ perfilInicial = '', compacto = false }: { pe
                 onChange={(evento) => alterar('consumoOuConta', evento.target.value)} />
             </div>
 
-            <div>
-              <label className="flex items-start gap-3 text-sm">
-                <input type="checkbox" checked={dados.consentimento} onChange={(evento) => alterar('consentimento', evento.target.checked)}
-                  aria-invalid={Boolean(erros.consentimento)} aria-describedby={erros.consentimento ? 'erro-consentimento' : undefined}
-                  className="mt-0.5 size-5 shrink-0 accent-brand-blue" />
-                <span>Concordo com o tratamento dos meus dados conforme a{' '}
-                  <Link to="/privacidade" className="underline underline-offset-4">política de privacidade</Link>.</span>
-              </label>
-              <MensagemDeErro id="erro-consentimento" texto={erros.consentimento} />
-            </div>
+            <CaixaDeAceite id="consentimento" marcado={dados.consentimento} erro={erros.consentimento}
+              aoMudar={(marcado) => alterar('consentimento', marcado)}>
+              Concordo com o tratamento dos meus dados conforme a{' '}
+              <Link to="/privacidade" className="underline underline-offset-4">política de privacidade</Link>.
+            </CaixaDeAceite>
 
             <button type="submit" className="site-button self-start">Quero minha proposta</button>
           </form>

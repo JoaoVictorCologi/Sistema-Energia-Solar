@@ -2,8 +2,8 @@ import type { ReactNode } from 'react';
 import { empresa } from '../../dados/empresa.ts';
 import { useTituloDaPagina } from '../../hooks/useTituloDaPagina.ts';
 
-// Atualizar a data só quando o texto mudar de fato. A tarefa 12 (pedido de proposta) e o Plano 6 (contato pela API) mudam as seções 2 a 4.
-const ATUALIZADA_EM = '30 de outubro de 2026';
+// Atualizar a data só quando o texto mudar de fato. O Plano 6 (contato pela API) muda as seções 2 a 4.
+const ATUALIZADA_EM = '3 de novembro de 2026';
 
 const classeDoLinkExterno = 'break-all underline underline-offset-4';
 
@@ -31,20 +31,35 @@ export function Privacidade() {
 
         <Secao titulo="2. Quais dados você informa">
           <p>
-            Coletamos apenas os dados que você mesmo informa no formulário de contato: nome, telefone, cidade, perfil solar e, se quiser,
-            o consumo mensal de energia ou o valor da conta de luz.
+            <strong className="font-semibold text-brand-ink">No simulador:</strong> CEP, distribuidora de energia, tipo de imóvel, tipo de ligação e consumo médio mensal.
+            A simulação é gravada com esses dados e o resultado calculado, sem nome nem contato.
+          </p>
+          <p>
+            <strong className="font-semibold text-brand-ink">No pedido de proposta</strong> (na tela do resultado): nome, e-mail e telefone,
+            com o registro da data em que você aceitou o uso dos dados. O pedido fica ligado à sua simulação e ao CEP informado nela.
+          </p>
+          <p>
+            <strong className="font-semibold text-brand-ink">No formulário de contato:</strong> nome, telefone, cidade, perfil solar e, se quiser,
+            o consumo mensal ou o valor da conta de luz.
           </p>
           <p>Não usamos cookies de rastreamento, pixels de anúncio nem ferramentas de análise de comportamento.</p>
         </Secao>
 
         <Secao titulo="3. Como usamos seus dados">
-          <p>Usamos essas informações só para elaborar uma proposta de energia solar e entrar em contato com você.</p>
+          <p>
+            Usamos essas informações só para calcular a simulação, elaborar a proposta de energia solar e entrar em contato com você.
+            Simulações sem pedido de proposta servem apenas para mostrar o resultado e não identificam quem as fez.
+          </p>
         </Secao>
 
-        <Secao titulo="4. Como seus dados são transmitidos">
+        <Secao titulo="4. Onde seus dados ficam">
           <p>
-            O formulário de contato não grava seus dados em banco de dados. Ao preencher e enviar, seu navegador monta uma mensagem com
-            os dados informados e abre o WhatsApp, e o envio é decidido por você. Essa conversa segue a{' '}
+            Simulações e pedidos de proposta ficam guardados no banco de dados do sistema e só aparecem na área restrita, acessada com login
+            pelo administrador. Para encontrar a cidade, o servidor consulta o CEP no serviço público ViaCEP; só o CEP é enviado.
+          </p>
+          <p>
+            O formulário de contato não grava seus dados: seu navegador monta uma mensagem e abre o WhatsApp, e o envio é decidido por você.
+            Essa conversa segue a{' '}
             <a href="https://www.whatsapp.com/legal/privacy-policy" target="_blank" rel="noopener noreferrer" className={classeDoLinkExterno}>política de privacidade do WhatsApp</a>.
           </p>
         </Secao>
@@ -71,6 +86,7 @@ export function Privacidade() {
           <p>
             Conforme a Lei Geral de Proteção de Dados (Lei 13.709/2018), você tem direito a confirmar a existência de tratamento de dados, acessar seus dados,
             corrigir dados incompletos ou desatualizados, solicitar a exclusão de dados tratados com seu consentimento e revogar seu consentimento a qualquer momento.
+            Isso vale também para o seu pedido de proposta e a simulação ligada a ele.
           </p>
         </Secao>
 
