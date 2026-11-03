@@ -1,0 +1,46 @@
+{
+  "versao": "2026-11-03",
+  "uf": "SP",
+  "distribuidoraPadrao": "CPFL Santa Cruz",
+  "fioBPercentualPorAno": {
+    "2023": "0.15",
+    "2024": "0.30",
+    "2025": "0.45",
+    "2026": "0.60",
+    "2027": "0.75",
+    "2028": "0.90",
+    "2029": "1.00"
+  },
+  "consumoMinimoKwh": {
+    "monofasico": "30",
+    "bifasico": "50",
+    "trifasico": "100"
+  },
+  "impostos": {
+    "icmsFaixas": [
+      { "ateKwh": "200", "aliquota": "0.12" },
+      { "ateKwh": null, "aliquota": "0.18" }
+    ],
+    "pis": "0.0100",
+    "cofins": "0.0450"
+  },
+  "performanceRatio": "0.78",
+  "degradacaoAnualPadrao": "0.005",
+  "simultaneidade": {
+    "B1": "0.30",
+    "B2": "0.40",
+    "B3": "0.40"
+  },
+  "custoReferenciaPorKwp": "4000.00",
+  "fontes": {
+    "uf": "Mococa-SP, sede da empresa. A confirmar com a equipe.",
+    "distribuidoraPadrao": "CPFL Santa Cruz (incorporou a CPFL Mococa). A confirmar com a equipe e com o SigAgente da ANEEL na tarefa 6.",
+    "fioBPercentualPorAno": "Lei 14.300/2022, art. 27. De 2029 em diante depende da valoração da ANEEL: cenário conservador de 100%, aplicado a todos os anos seguintes.",
+    "consumoMinimoKwh": "REN ANEEL 1.000/2021 (custo de disponibilidade).",
+    "impostos": "ICMS de SP sobre energia residencial: 12% até 200 kWh por mês e 18% acima (RICMS/SP, art. 52, com o limite da ADI 7112). PIS e COFINS variam por mês e por distribuidora: valores ilustrativos, a calibrar com as contas reais.",
+    "performanceRatio": "Perdas típicas de temperatura, sujeira, cabos e inversor. A calibrar com as contas reais (tarefa 11).",
+    "degradacaoAnualPadrao": "Usada quando o datasheet do módulo não informa (0,5% ao ano).",
+    "simultaneidade": "Premissa de projeto. A calibrar com as contas reais (tarefa 11).",
+    "custoReferenciaPorKwp": "Estimativa do investimento na simulação pública; a tela avisa “valor final na proposta”. A calibrar com os preços de equipamentos da equipe."
+  }
+}

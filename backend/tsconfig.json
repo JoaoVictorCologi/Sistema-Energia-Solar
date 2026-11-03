@@ -9,6 +9,7 @@
     "noEmit": true,
     "skipLibCheck": true,
     "verbatimModuleSyntax": true,
+    "resolveJsonModule": true,
     "erasableSyntaxOnly": true,
     "rewriteRelativeImportExtensions": true,
     "forceConsistentCasingInFileNames": true
