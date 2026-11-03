@@ -121,6 +121,7 @@ export interface Simulacao {
   tarifa_id: number;
   irradiacao_id: number;
   versao_parametros: string;
+  cliente_id: number | null;
   entrada: unknown;
   resultado: unknown;
   criado_em: Date;
