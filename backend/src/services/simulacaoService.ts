@@ -175,7 +175,18 @@ export function montarEntrada(
   };
 }
 
-// Avisos sobre os dados usados: tarifa vencida, Fio B de vigência anterior e distribuidora fora da calibração.
+// PR e simultaneidade não vêm de API. Sem contas reais conferidas, são valores típicos em todo lugar;
+// depois da calibração, só a distribuidora das contas deixa de ter o aviso.
+function alertaDeCalibracao(distribuidora: DistribuidoraEscolhida): Alerta[] {
+  const { calibracao } = parametros;
+  if (!calibracao.calibrada) {
+    return [{ codigo: 'PREMISSAS_NAO_CALIBRADAS', mensagem: 'Aproveitamento do sistema e consumo simultâneo são valores típicos, ainda não calibrados com contas reais: o resultado é uma estimativa.' }];
+  }
+  if (distribuidora.cnpj === calibracao.cnpj) return [];
+  return [{ codigo: 'ESTIMATIVA_FORA_DA_REGIAO_CALIBRADA', mensagem: `Aproveitamento do sistema e consumo simultâneo foram calibrados com contas da ${calibracao.sigla}: para ${distribuidora.sigla}, são valores típicos e o resultado é uma estimativa.` }];
+}
+
+// Avisos sobre os dados usados: tarifa vencida, Fio B de vigência anterior e premissas sem calibração.
 export function alertasDasReferencias(referencias: Referencias, hoje: string): Alerta[] {
   const alertas: Alerta[] = [];
   const { tarifa, fioBDaVigencia, distribuidora } = referencias;
@@ -185,9 +196,7 @@ export function alertasDasReferencias(referencias: Referencias, hoje: string): A
   if (fioBDaVigencia) {
     alertas.push({ codigo: 'FIO_B_DA_VIGENCIA_ANTERIOR', mensagem: `A ANEEL ainda não publicou o Fio B desta tarifa: usamos o de ${fioBDaVigencia}, corrigido pela variação da TUSD.` });
   }
-  if (distribuidora.cnpj !== parametros.distribuidoraDaCalibracao.cnpj) {
-    alertas.push({ codigo: 'ESTIMATIVA_FORA_DA_REGIAO_CALIBRADA', mensagem: `As premissas foram calibradas com contas da ${parametros.distribuidoraDaCalibracao.sigla}: para ${distribuidora.sigla}, o resultado é uma estimativa.` });
-  }
+  alertas.push(...alertaDeCalibracao(distribuidora));
   return alertas;
 }
 

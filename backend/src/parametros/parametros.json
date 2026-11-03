@@ -1,6 +1,7 @@
 {
   "versao": "2026-11-03",
-  "distribuidoraDaCalibracao": {
+  "calibracao": {
+    "calibrada": false,
     "cnpj": "53859112000169",
     "sigla": "CPFL Santa Cruz"
   },
@@ -59,7 +60,7 @@
     "validadeDias": 10
   },
   "fontes": {
-    "distribuidoraDaCalibracao": "Distribuidora das contas reais usadas para calibrar PR e simultaneidade (tarefa 11 do Plano 1). Nas outras, a simulação traz o alerta de estimativa.",
+    "calibracao": "PR e simultaneidade são valores típicos até a calibração com contas reais (Plano 1, tarefa 11, em docs/validacao.md). Com as contas, mude calibrada para true: o aviso de estimativa passa a aparecer só fora desta distribuidora.",
     "fioBPercentualPorAno": "Lei 14.300/2022, art. 27. De 2029 em diante depende da valoração da ANEEL: cenário conservador de 100%, aplicado a todos os anos seguintes.",
     "consumoMinimoKwh": "REN ANEEL 1.000/2021 (custo de disponibilidade).",
     "performanceRatio": "Perdas típicas de temperatura, sujeira, cabos e inversor. A calibrar com as contas reais (tarefa 11).",

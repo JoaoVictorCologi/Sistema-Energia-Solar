@@ -19,14 +19,16 @@ import {
   alertasDasReferencias, buscarReferencias, dimensionarPedido, montarEntrada, type DadosDoPedido, type DistribuidoraEscolhida, type Referencias,
 } from './simulacaoService.ts';
 
+// Simulações de antes da cobertura nacional (Plano 5) não gravavam a distribuidora: eram todas da CPFL Santa Cruz.
+const DISTRIBUIDORA_DAS_SIMULACOES_ANTIGAS = { cnpj: '53859112000169', sigla: 'CPFL Santa Cruz' };
+
 // O pedido gravado na simulação (Decimal vira texto no JSONB).
 const esquemaPedidoGravado = z.object({
   cep: z.string(),
   tipoLigacao: z.enum(['monofasico', 'bifasico', 'trifasico']),
   subgrupo: z.enum(['B1', 'B2', 'B3']),
   consumoMedioKwh: z.string().transform((valor) => new Decimal(valor)),
-  // Simulações de antes da cobertura nacional não gravavam a distribuidora: eram todas da CPFL Santa Cruz.
-  distribuidora: z.object({ cnpj: z.string(), sigla: z.string() }).default(parametros.distribuidoraDaCalibracao),
+  distribuidora: z.object({ cnpj: z.string(), sigla: z.string() }).default(DISTRIBUIDORA_DAS_SIMULACOES_ANTIGAS),
 });
 
 interface ContextoDaProposta {

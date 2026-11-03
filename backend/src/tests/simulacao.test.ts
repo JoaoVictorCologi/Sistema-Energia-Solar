@@ -9,6 +9,7 @@ import { buscarIrradiacaoDoMunicipio } from '../repositories/irradiacaoRepositor
 import { buscarMunicipio } from '../repositories/municipiosRepository.ts';
 import { inserirSimulacao } from '../repositories/simulacoesRepository.ts';
 import { buscarTarifaVigente, buscarUltimaTarifaComFioB, listarCnpjsComTarifaDesde } from '../repositories/tarifasRepository.ts';
+import { parametros } from '../parametros/parametros.ts';
 import { simularEconomia } from '../services/simulacaoService.ts';
 
 vi.mock('../repositories/cepRepository.ts', () => ({ buscarCodigoIbgeDoCep: vi.fn(), salvarCepNoCache: vi.fn() }));
@@ -171,8 +172,30 @@ describe('POST /api/simulacoes', () => {
     expect(entrada.pedido.distribuidora).toEqual({ cnpj: SANTA_CRUZ.cnpj, sigla: 'CPFL Santa Cruz' });
   });
 
-  it('na distribuidora da calibração, não avisa de estimativa', async () => {
-    expect(codigosDosAlertas(await simular(PEDIDO))).not.toContain('ESTIMATIVA_FORA_DA_REGIAO_CALIBRADA');
+  describe('aviso de calibração de PR e simultaneidade', () => {
+    afterEach(() => { parametros.calibracao.calibrada = false; });
+
+    it('sem contas reais conferidas, avisa em todas as distribuidoras, inclusive na de Mococa', async () => {
+      for (const cep of ['13730-250', '20040-002']) {
+        const alertas = codigosDosAlertas(await simular({ ...PEDIDO, cep }));
+        expect(alertas).toContain('PREMISSAS_NAO_CALIBRADAS');
+        expect(alertas).not.toContain('ESTIMATIVA_FORA_DA_REGIAO_CALIBRADA');
+      }
+    });
+
+    it('depois da calibração, avisa só fora da distribuidora das contas', async () => {
+      parametros.calibracao.calibrada = true;
+
+      const mococa = codigosDosAlertas(await simular(PEDIDO));
+      const rio = await simular({ ...PEDIDO, cep: '20040-002' });
+
+      expect(mococa).not.toContain('PREMISSAS_NAO_CALIBRADAS');
+      expect(mococa).not.toContain('ESTIMATIVA_FORA_DA_REGIAO_CALIBRADA');
+      expect(rio.body.simulacao.alertas).toContainEqual({
+        codigo: 'ESTIMATIVA_FORA_DA_REGIAO_CALIBRADA',
+        mensagem: 'Aproveitamento do sistema e consumo simultâneo foram calibrados com contas da CPFL Santa Cruz: para LIGHT SESA, são valores típicos e o resultado é uma estimativa.',
+      });
+    });
   });
 
   it('busca a tarifa pelo CNPJ e pelo subgrupo pedido, e usa o ICMS da faixa de consumo', async () => {
@@ -183,12 +206,11 @@ describe('POST /api/simulacoes', () => {
     expect(resposta.body.simulacao.premissas.simultaneidade).toBe(0.4);
   });
 
-  it('usa o ICMS da UF do município (RJ: 22% acima de 300 kWh) e avisa que é estimativa fora da calibração', async () => {
+  it('usa o ICMS da UF do município (RJ: 22% acima de 300 kWh)', async () => {
     const resposta = await simular({ ...PEDIDO, cep: '20040-002' });
 
     expect(resposta.status).toBe(201);
     expect(resposta.body.simulacao.premissas).toMatchObject({ distribuidora: 'LIGHT SESA', tributos: { icms: 0.22 } });
-    expect(codigosDosAlertas(resposta)).toContain('ESTIMATIVA_FORA_DA_REGIAO_CALIBRADA');
   });
 
   it('com mais de uma distribuidora, sem escolha → 400 DISTRIBUIDORA_OBRIGATORIA', async () => {
