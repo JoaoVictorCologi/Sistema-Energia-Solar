@@ -1,0 +1,297 @@
+{
+  "versao": "2026-11-03",
+  "pisCofins": {
+    "pis": "0.0100",
+    "cofins": "0.0450",
+    "fonte": "Média nacional estimada: PIS e COFINS variam por mês e por distribuidora. A calibrar com contas reais."
+  },
+  "fonteGeral": "Alíquotas gerais de 2026 (simtax.com.br, conferidas com outras tabelas públicas) e faixas residenciais confirmadas. ICMS sobre a cobrança de Fio B: sim em todas as UFs (conservador) até conferir numa conta real de cliente GD II de cada UF.",
+  "ufs": {
+    "AC": {
+      "icmsFaixas": [
+        {
+          "ateKwh": null,
+          "aliquota": "0.19"
+        }
+      ],
+      "icmsSobreFioB": true,
+      "fonte": "Alíquota geral do estado: a LC 194/2022 limita o ICMS da energia a ela. Faixas residenciais a conferir."
+    },
+    "AL": {
+      "icmsFaixas": [
+        {
+          "ateKwh": null,
+          "aliquota": "0.215"
+        }
+      ],
+      "icmsSobreFioB": true,
+      "fonte": "Alíquota geral com 1% do FECOEP. A conferir."
+    },
+    "AM": {
+      "icmsFaixas": [
+        {
+          "ateKwh": null,
+          "aliquota": "0.20"
+        }
+      ],
+      "icmsSobreFioB": true,
+      "fonte": "Alíquota geral do estado: a LC 194/2022 limita o ICMS da energia a ela. Faixas residenciais a conferir."
+    },
+    "AP": {
+      "icmsFaixas": [
+        {
+          "ateKwh": null,
+          "aliquota": "0.18"
+        }
+      ],
+      "icmsSobreFioB": true,
+      "fonte": "Alíquota geral do estado: a LC 194/2022 limita o ICMS da energia a ela. Faixas residenciais a conferir."
+    },
+    "BA": {
+      "icmsFaixas": [
+        {
+          "ateKwh": null,
+          "aliquota": "0.205"
+        }
+      ],
+      "icmsSobreFioB": true,
+      "fonte": "Alíquota geral do estado: a LC 194/2022 limita o ICMS da energia a ela. Faixas residenciais a conferir."
+    },
+    "CE": {
+      "icmsFaixas": [
+        {
+          "ateKwh": null,
+          "aliquota": "0.20"
+        }
+      ],
+      "icmsSobreFioB": true,
+      "fonte": "Alíquota geral do estado: a LC 194/2022 limita o ICMS da energia a ela. Faixas residenciais a conferir."
+    },
+    "DF": {
+      "icmsFaixas": [
+        {
+          "ateKwh": null,
+          "aliquota": "0.20"
+        }
+      ],
+      "icmsSobreFioB": true,
+      "fonte": "Alíquota geral do estado: a LC 194/2022 limita o ICMS da energia a ela. Faixas residenciais a conferir."
+    },
+    "ES": {
+      "icmsFaixas": [
+        {
+          "ateKwh": null,
+          "aliquota": "0.17"
+        }
+      ],
+      "icmsSobreFioB": true,
+      "fonte": "Alíquota geral do estado: a LC 194/2022 limita o ICMS da energia a ela. Faixas residenciais a conferir."
+    },
+    "GO": {
+      "icmsFaixas": [
+        {
+          "ateKwh": null,
+          "aliquota": "0.19"
+        }
+      ],
+      "icmsSobreFioB": true,
+      "fonte": "Alíquota geral do estado: a LC 194/2022 limita o ICMS da energia a ela. Faixas residenciais a conferir."
+    },
+    "MA": {
+      "icmsFaixas": [
+        {
+          "ateKwh": null,
+          "aliquota": "0.23"
+        }
+      ],
+      "icmsSobreFioB": true,
+      "fonte": "Alíquota geral do estado: a LC 194/2022 limita o ICMS da energia a ela. Faixas residenciais a conferir."
+    },
+    "MG": {
+      "icmsFaixas": [
+        {
+          "ateKwh": null,
+          "aliquota": "0.18"
+        }
+      ],
+      "icmsSobreFioB": true,
+      "fonte": "Alíquota geral do estado: a LC 194/2022 limita o ICMS da energia a ela. Faixas residenciais a conferir."
+    },
+    "MS": {
+      "icmsFaixas": [
+        {
+          "ateKwh": null,
+          "aliquota": "0.17"
+        }
+      ],
+      "icmsSobreFioB": true,
+      "fonte": "Alíquota geral do estado: a LC 194/2022 limita o ICMS da energia a ela. Faixas residenciais a conferir."
+    },
+    "MT": {
+      "icmsFaixas": [
+        {
+          "ateKwh": "150",
+          "aliquota": "0.12"
+        },
+        {
+          "ateKwh": null,
+          "aliquota": "0.17"
+        }
+      ],
+      "icmsSobreFioB": true,
+      "fonte": "12% até 150 kWh por mês e 17% acima. A conferir."
+    },
+    "PA": {
+      "icmsFaixas": [
+        {
+          "ateKwh": null,
+          "aliquota": "0.19"
+        }
+      ],
+      "icmsSobreFioB": true,
+      "fonte": "Alíquota geral do estado: a LC 194/2022 limita o ICMS da energia a ela. Faixas residenciais a conferir."
+    },
+    "PB": {
+      "icmsFaixas": [
+        {
+          "ateKwh": null,
+          "aliquota": "0.20"
+        }
+      ],
+      "icmsSobreFioB": true,
+      "fonte": "Alíquota geral do estado: a LC 194/2022 limita o ICMS da energia a ela. Faixas residenciais a conferir."
+    },
+    "PE": {
+      "icmsFaixas": [
+        {
+          "ateKwh": null,
+          "aliquota": "0.205"
+        }
+      ],
+      "icmsSobreFioB": true,
+      "fonte": "Alíquota geral do estado: a LC 194/2022 limita o ICMS da energia a ela. Faixas residenciais a conferir."
+    },
+    "PI": {
+      "icmsFaixas": [
+        {
+          "ateKwh": null,
+          "aliquota": "0.225"
+        }
+      ],
+      "icmsSobreFioB": true,
+      "fonte": "Alíquota geral do estado: a LC 194/2022 limita o ICMS da energia a ela. Faixas residenciais a conferir."
+    },
+    "PR": {
+      "icmsFaixas": [
+        {
+          "ateKwh": null,
+          "aliquota": "0.195"
+        }
+      ],
+      "icmsSobreFioB": true,
+      "fonte": "Alíquota geral do estado: a LC 194/2022 limita o ICMS da energia a ela. Faixas residenciais a conferir."
+    },
+    "RJ": {
+      "icmsFaixas": [
+        {
+          "ateKwh": "300",
+          "aliquota": "0.18"
+        },
+        {
+          "ateKwh": null,
+          "aliquota": "0.22"
+        }
+      ],
+      "icmsSobreFioB": true,
+      "fonte": "18% até 300 kWh por mês; acima, 20% + 2% do FECP. A conferir."
+    },
+    "RN": {
+      "icmsFaixas": [
+        {
+          "ateKwh": null,
+          "aliquota": "0.20"
+        }
+      ],
+      "icmsSobreFioB": true,
+      "fonte": "Alíquota geral do estado: a LC 194/2022 limita o ICMS da energia a ela. Faixas residenciais a conferir."
+    },
+    "RO": {
+      "icmsFaixas": [
+        {
+          "ateKwh": null,
+          "aliquota": "0.195"
+        }
+      ],
+      "icmsSobreFioB": true,
+      "fonte": "Alíquota geral do estado: a LC 194/2022 limita o ICMS da energia a ela. Faixas residenciais a conferir."
+    },
+    "RR": {
+      "icmsFaixas": [
+        {
+          "ateKwh": null,
+          "aliquota": "0.20"
+        }
+      ],
+      "icmsSobreFioB": true,
+      "fonte": "Alíquota geral do estado: a LC 194/2022 limita o ICMS da energia a ela. Faixas residenciais a conferir."
+    },
+    "RS": {
+      "icmsFaixas": [
+        {
+          "ateKwh": null,
+          "aliquota": "0.17"
+        }
+      ],
+      "icmsSobreFioB": true,
+      "fonte": "Alíquota geral do estado: a LC 194/2022 limita o ICMS da energia a ela. Faixas residenciais a conferir."
+    },
+    "SC": {
+      "icmsFaixas": [
+        {
+          "ateKwh": "150",
+          "aliquota": "0.12"
+        },
+        {
+          "ateKwh": null,
+          "aliquota": "0.17"
+        }
+      ],
+      "icmsSobreFioB": true,
+      "fonte": "12% para energia residencial até 150 kWh por mês e 17% acima. A conferir."
+    },
+    "SE": {
+      "icmsFaixas": [
+        {
+          "ateKwh": null,
+          "aliquota": "0.21"
+        }
+      ],
+      "icmsSobreFioB": true,
+      "fonte": "Alíquota geral de 20% + 1% do FECOEP. A conferir."
+    },
+    "SP": {
+      "icmsFaixas": [
+        {
+          "ateKwh": "200",
+          "aliquota": "0.12"
+        },
+        {
+          "ateKwh": null,
+          "aliquota": "0.18"
+        }
+      ],
+      "icmsSobreFioB": true,
+      "fonte": "RICMS/SP, art. 52: 12% até 200 kWh por mês e 18% acima (limite da ADI 7112)."
+    },
+    "TO": {
+      "icmsFaixas": [
+        {
+          "ateKwh": null,
+          "aliquota": "0.20"
+        }
+      ],
+      "icmsSobreFioB": true,
+      "fonte": "Alíquota geral do estado: a LC 194/2022 limita o ICMS da energia a ela. Faixas residenciais a conferir."
+    }
+  }
+}

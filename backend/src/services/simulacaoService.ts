@@ -5,6 +5,8 @@ import { simular, type EntradaSimulacao, type PremissasDaSimulacao } from '../mo
 import { fracao, kwh, reais, reaisPorKwh, type Alerta } from '../motor/tipos.ts';
 import { ErroHttp } from '../middlewares/erros.ts';
 import { parametros } from '../parametros/parametros.ts';
+import { tributosDaUf } from '../parametros/tributos.ts';
+import { buscarMunicipio } from '../repositories/municipiosRepository.ts';
 import { buscarUltimoIndicador } from '../repositories/indicadoresRepository.ts';
 import { buscarIrradiacaoDoMunicipio, type IrradiacaoGravada } from '../repositories/irradiacaoRepository.ts';
 import { inserirSimulacao } from '../repositories/simulacoesRepository.ts';
@@ -34,6 +36,8 @@ const SERIE_IPCA_12_MESES = 13522;
 const SERIE_SELIC_META = 432;
 
 export interface Referencias {
+  // UF do município: define o ICMS (tributos-por-uf.json).
+  uf: string;
   tarifa: TarifaGravada & { fioB: Decimal };
   irradiacao: IrradiacaoGravada;
   reajusteAnual: Decimal;
@@ -45,19 +49,15 @@ function dadosIndisponiveis(): ErroHttp {
 }
 
 export async function buscarReferencias(codigoIbge: number, subgrupo: Subgrupo, hoje: string): Promise<Referencias> {
-  const [tarifa, irradiacao, ipca, selic] = await Promise.all([
+  const [municipio, tarifa, irradiacao, ipca, selic] = await Promise.all([
+    buscarMunicipio(codigoIbge),
     buscarTarifaVigente({ sigla: parametros.distribuidoraPadrao, subgrupo, ...CLASSE_DO_SUBGRUPO[subgrupo], data: hoje }),
     buscarIrradiacaoDoMunicipio(codigoIbge),
     buscarUltimoIndicador(SERIE_IPCA_12_MESES),
     buscarUltimoIndicador(SERIE_SELIC_META),
   ]);
-  if (!tarifa?.fioB || !irradiacao || !ipca || !selic) throw dadosIndisponiveis();
-  return { tarifa: { ...tarifa, fioB: tarifa.fioB }, irradiacao, reajusteAnual: ipca.valor.div(100), taxaDesconto: selic.valor.div(100) };
-}
-
-// ICMS de SP por faixa de consumo mensal: vale a primeira faixa que comporta o consumo médio.
-function aliquotaDeIcms(consumoMedio: Decimal): Decimal {
-  return parametros.impostos.icmsFaixas.find((faixa) => faixa.ateKwh === null || consumoMedio.lte(faixa.ateKwh))!.aliquota;
+  if (!municipio || !tarifa?.fioB || !irradiacao || !ipca || !selic) throw dadosIndisponiveis();
+  return { uf: municipio.uf, tarifa: { ...tarifa, fioB: tarifa.fioB }, irradiacao, reajusteAnual: ipca.valor.div(100), taxaDesconto: selic.valor.div(100) };
 }
 
 // A conexão prevista é o mês seguinte ao de hoje.
@@ -110,6 +110,10 @@ export function dimensionarPedido(pedido: PedidoDeSimulacao, referencias: Refere
   });
 }
 
+function comoTributos({ icms, pis, cofins, icmsSobreFioB }: ReturnType<typeof tributosDaUf>) {
+  return { icms: fracao(icms), pis: fracao(pis), cofins: fracao(cofins), icmsSobreFioB };
+}
+
 export function montarEntrada(
   pedido: PedidoDeSimulacao,
   referencias: Referencias,
@@ -121,7 +125,7 @@ export function montarEntrada(
     consumoMensal: Array.from({ length: 12 }, () => kwh(pedido.consumoMedioKwh)),
     hspMensal: referencias.irradiacao.hspMensal,
     tarifa: { te: reaisPorKwh(tarifa.te), tusd: reaisPorKwh(tarifa.tusd), fioB: reaisPorKwh(tarifa.fioB), adicionalBandeira: reaisPorKwh(0) },
-    tributos: { icms: fracao(aliquotaDeIcms(pedido.consumoMedioKwh)), pis: fracao(parametros.impostos.pis), cofins: fracao(parametros.impostos.cofins), icmsSobreFioB: parametros.icmsSobreFioB },
+    tributos: comoTributos(tributosDaUf(referencias.uf, pedido.consumoMedioKwh)),
     modulo: { potenciaW: equipamentos.modulo.potenciaW, degradacaoAnual: fracao(equipamentos.modulo.degradacaoAnual) },
     inversoresKw: equipamentos.inversoresKw,
     investimento: reais(equipamentos.investimento),

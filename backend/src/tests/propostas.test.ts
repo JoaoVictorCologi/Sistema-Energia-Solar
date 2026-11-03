@@ -18,6 +18,7 @@ vi.mock('../repositories/clientesRepository.ts', () => ({ buscarClientePorId: vi
 vi.mock('../repositories/equipamentosRepository.ts', () => ({ listarEquipamentos: vi.fn(), inserirEquipamento: vi.fn(), atualizarEquipamento: vi.fn() }));
 vi.mock('../repositories/indicadoresRepository.ts', () => ({ buscarUltimoIndicador: vi.fn() }));
 vi.mock('../repositories/irradiacaoRepository.ts', () => ({ buscarIrradiacaoDoMunicipio: vi.fn() }));
+vi.mock('../repositories/municipiosRepository.ts', () => ({ buscarMunicipio: vi.fn(async () => ({ codigoIbge: 3530508, nome: 'Mococa', uf: 'SP' })) }));
 vi.mock('../repositories/propostasRepository.ts', () => ({
   gravarPropostaComPrecosDoCatalogo: vi.fn(), buscarProposta: vi.fn(), atualizarStatusDaProposta: vi.fn(), listarPropostas: vi.fn(),
 }));
