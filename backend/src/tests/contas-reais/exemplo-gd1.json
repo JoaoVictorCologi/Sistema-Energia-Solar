@@ -1,0 +1,14 @@
+{
+  "descricao": "Exemplo resolvido da especificação do motor, mesmo caso em GD I (não é conta real)",
+  "real": false,
+  "mesReferencia": "2026-04",
+  "consumoMinimoKwh": "30",
+  "regime": "GD_I",
+  "consumoDaRedeKwh": "264.865",
+  "injecaoKwh": "315.315",
+  "creditosAnterioresKwh": "0",
+  "tarifaSemImpostos": { "te": "0.30", "tusd": "0.45", "fioB": "0.20" },
+  "percentualFioB": "0.60",
+  "tributos": { "icms": "0.18", "pis": "0.01", "cofins": "0.045", "icmsSobreFioB": true },
+  "cobradoSemIluminacaoPublica": "29.41"
+}
