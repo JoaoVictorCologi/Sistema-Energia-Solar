@@ -76,8 +76,9 @@ export async function gravarTarifas({ distribuidora, novas, alteradas, importaca
   await db.transaction(async (transacao) => {
     const [{ id: distribuidoraId }] = await transacao<Distribuidora>('distribuidora')
       .insert({ sigla: distribuidora.sigla, cnpj: distribuidora.cnpj, nome: distribuidora.sigla, atualizado_em: agora })
-      .onConflict('sigla')
-      .merge(['cnpj', 'atualizado_em'])
+      // O CNPJ é a chave; a sigla e o nome seguem a vigência mais recente.
+      .onConflict('cnpj')
+      .merge(['sigla', 'nome', 'atualizado_em'])
       .returning('id');
     if (novas.length > 0) {
       await transacao<Tarifa>('tarifa').insert(novas.map((tarifa) => ({ ...comoLinha(tarifa, importacaoId, agora), distribuidora_id: distribuidoraId })));

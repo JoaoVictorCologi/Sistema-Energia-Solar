@@ -67,7 +67,7 @@ describe('GET /api/admin/importacoes', () => {
     const resposta = await request(criarApp()).get('/api/admin/importacoes').set('Cookie', COOKIE_ADMIN);
 
     expect(resposta.status).toBe(200);
-    expect(resposta.body.importacoes.map((item: { tipo: string }) => item.tipo)).toEqual(['aneel-tarifas', 'bcb-indicadores', 'modulo-teste']);
+    expect(resposta.body.importacoes.map((item: { tipo: string }) => item.tipo)).toEqual(['aneel-tarifas', 'bcb-indicadores', 'aneel-distribuidoras', 'modulo-teste']);
     expect(resposta.body.importacoes[0]).toEqual({
       tipo: 'aneel-tarifas',
       descricao: 'Tarifas (TE, TUSD) e Fio B da ANEEL',
@@ -79,7 +79,7 @@ describe('GET /api/admin/importacoes', () => {
       ultimoSucessoEm: INICIO.toISOString(),
       desatualizada: expect.any(Boolean),
     });
-    expect(resposta.body.importacoes[2]).toMatchObject({ tipo: 'modulo-teste', ultimaExecucao: null, ultimoSucessoEm: null, desatualizada: true });
+    expect(resposta.body.importacoes[3]).toMatchObject({ tipo: 'modulo-teste', ultimaExecucao: null, ultimoSucessoEm: null, desatualizada: true });
   });
 });
 
