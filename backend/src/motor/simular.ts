@@ -6,7 +6,7 @@ import { calcularIndicadores, type Indicadores } from './financeiro.ts';
 import { faturarMes, type LoteDeCredito, type RegimeGd, type ResultadoMes } from './faturamento.ts';
 import { diasDoMes, geracaoMensal } from './geracao.ts';
 import { cobrancaFioB, tarifaComImpostos, tarifaDoAno, type TarifaSemImpostos, type Tributos } from './tarifa.ts';
-import { fracao, kwh, reais, type Alerta, type Fracao, type Kwh, type Reais } from './tipos.ts';
+import { fracao, kwh, reais, type Alerta, type Fracao, type Kwh, type Reais, type ReaisPorKwh } from './tipos.ts';
 
 export interface PremissasDaSimulacao {
   performanceRatio: Fracao;
@@ -75,8 +75,25 @@ export function percentualFioB(tabela: Record<number, Fracao>, anoCivil: number)
   return anoDaTabela === undefined ? fracao(0) : tabela[anoDaTabela];
 }
 
+// Tarifa e Fio B só mudam com o ano da simulação (reajuste) e o ano civil (percentual): calcula uma vez por par.
+function criarTabelaDePrecos(entrada: EntradaSimulacao): (ano: number, anoCivil: number) => { tarifaCheia: ReaisPorKwh; cobrancaFioB: ReaisPorKwh } {
+  const precos = new Map<string, { tarifaCheia: ReaisPorKwh; cobrancaFioB: ReaisPorKwh }>();
+  return (ano, anoCivil) => {
+    const chave = `${ano}-${anoCivil}`;
+    if (!precos.has(chave)) {
+      const tarifa = tarifaDoAno(entrada.tarifa, entrada.premissas.reajusteAnual, ano);
+      precos.set(chave, {
+        tarifaCheia: tarifaComImpostos(tarifa, entrada.tributos),
+        cobrancaFioB: cobrancaFioB(tarifa, entrada.tributos, percentualFioB(entrada.premissas.percentualFioBPorAno, anoCivil)),
+      });
+    }
+    return precos.get(chave)!;
+  };
+}
+
 function simularMeses(entrada: EntradaSimulacao, dimensionamento: Dimensionamento): MesSimulado[] {
   const { premissas } = entrada;
+  const precosDoAno = criarTabelaDePrecos(entrada);
   const meses: MesSimulado[] = [];
   let creditos: LoteDeCredito[] = [];
 
@@ -85,15 +102,13 @@ function simularMeses(entrada: EntradaSimulacao, dimensionamento: Dimensionament
     const mesesDesdeJaneiro = entrada.inicio.mes - 1 + indice;
     const anoCivil = entrada.inicio.ano + Math.floor(mesesDesdeJaneiro / 12);
     const mes = (mesesDesdeJaneiro % 12) + 1;
-    const tarifa = tarifaDoAno(entrada.tarifa, premissas.reajusteAnual, ano);
     const consumo = entrada.consumoMensal[mes - 1];
     const geracao = geracaoMensal(dimensionamento.kwpInstalado, entrada.hspMensal[mes - 1], diasDoMes(anoCivil, mes),
       premissas.performanceRatio, entrada.modulo.degradacaoAnual, ano);
 
     const faturado = faturarMes({
       mes: indice, consumo, geracao, simultaneidade: premissas.simultaneidade, consumoMinimo: premissas.consumoMinimo,
-      tarifaCheia: tarifaComImpostos(tarifa, entrada.tributos),
-      cobrancaFioB: cobrancaFioB(tarifa, entrada.tributos, percentualFioB(premissas.percentualFioBPorAno, anoCivil)),
+      ...precosDoAno(ano, anoCivil),
       regime: entrada.regime, validadeDosCreditosMeses: premissas.validadeDosCreditosMeses,
     }, creditos);
     creditos = faturado.creditos;

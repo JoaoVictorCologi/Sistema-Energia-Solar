@@ -15,9 +15,14 @@ const TIR_MINIMA = new Decimal('-0.99');
 const TIR_MAXIMA = new Decimal('1');
 const PRECISAO_DA_TIR = new Decimal('1e-10');
 
+// (1 + taxa)^ano acumulado por multiplicação: a bisseção da TIR chama isto dezenas de vezes.
 function descontar(fluxo: Decimal[], taxa: Decimal): Decimal[] {
   const base = taxa.plus(1);
-  return fluxo.map((valor, ano) => valor.div(base.pow(ano)));
+  let fator = new Decimal(1);
+  return fluxo.map((valor, ano) => {
+    if (ano > 0) fator = fator.times(base);
+    return valor.div(fator);
+  });
 }
 
 export function valorPresenteLiquido(fluxo: Reais[], taxa: Fracao): Reais {
