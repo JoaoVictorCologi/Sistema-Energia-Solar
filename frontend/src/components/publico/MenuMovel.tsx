@@ -4,13 +4,13 @@ import { Link, NavLink } from 'react-router';
 import { linkDoWhatsApp } from '../../dados/empresa.ts';
 import type { ItemDeMenu } from '../../modulos/index.ts';
 
-// <dialog> nativo: prende o foco, fecha com Esc e devolve o foco ao botão que o abriu.
+// Menu de navegação do celular, em <dialog> nativo: prende o foco, fecha com Esc e devolve o foco ao botão que o abriu.
 export function MenuMovel({ itens }: { itens: ItemDeMenu[] }) {
   const dialogo = useRef<HTMLDialogElement>(null);
   const fechar = () => dialogo.current?.close();
 
   useEffect(() => {
-    // Ao ampliar a tela, o menu de celular some; um diálogo aberto e invisível prenderia o foco.
+    // Ao ampliar a tela, o botão do menu some; um diálogo aberto e invisível prenderia o foco.
     const telaGrande = window.matchMedia('(min-width: 768px)');
     const fecharNaTelaGrande = () => { if (telaGrande.matches) dialogo.current?.close(); };
     telaGrande.addEventListener('change', fecharNaTelaGrande);

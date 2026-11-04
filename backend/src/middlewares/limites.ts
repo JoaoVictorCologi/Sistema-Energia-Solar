@@ -1,3 +1,4 @@
+// Limites de requisição por IP, contra abuso e força bruta.
 import { rateLimit } from 'express-rate-limit';
 
 interface OpcoesDoLimite {
@@ -16,5 +17,5 @@ export function criarLimite({ janelaMs, maximo }: OpcoesDoLimite) {
   });
 }
 
-// Rotas públicas (simulação, pedido de proposta): 30 por minuto por IP, contra abuso do simulador.
+// Limite padrão para rotas públicas: 30 requisições por minuto por IP. A contagem vive na instância, por isso cada router cria a sua.
 export const limitePublico = criarLimite({ janelaMs: 60_000, maximo: 30 });

@@ -2,9 +2,9 @@ import { Bar, BarChart, CartesianGrid, Cell, ReferenceLine, ResponsiveContainer,
 import type { Simulacao } from '../../services/api.ts';
 import { formatarReais, formatarReaisCurto } from '../../utils/formatar.ts';
 
-// Uma série só (saldo acumulado), em destaque: o cinza marca os anos em que o investimento ainda está sendo pago,
-// o azul da marca os anos de ganho. A posição abaixo ou acima do zero já diz isso; a cor só reforça.
-// O cinza tem contraste baixo com o fundo (2,5:1), por isso a tabela ano a ano fica logo abaixo.
+// Uma única série (saldo acumulado): o cinza marca os anos em que o investimento ainda está sendo pago,
+// e o azul da marca, os anos de ganho. A posição abaixo ou acima do zero já indica isso, e a cor apenas reforça.
+// O cinza tem contraste baixo com o fundo (2,5:1); por isso, a tabela ano a ano oferece uma leitura alternativa.
 const COR_DO_GANHO = '#384C96';
 const COR_DO_INVESTIMENTO = '#9AA3B5';
 
@@ -43,6 +43,7 @@ export function GraficoDoRetorno({ anos }: { anos: ResumoDoAno[] }) {
   );
 }
 
+// Mesmos números do gráfico, como leitura alternativa.
 export function TabelaAnoAAno({ anos }: { anos: ResumoDoAno[] }) {
   return (
     <details className="mt-6 rounded-md border border-border bg-white">

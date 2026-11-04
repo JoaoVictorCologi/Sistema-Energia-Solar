@@ -4,7 +4,7 @@ import { empresa, linkDoWhatsApp } from '../../dados/empresa.ts';
 
 const classeDoLink = 'inline-flex min-h-11 items-center underline underline-offset-4';
 
-// Mesmos links e rótulos do rodapé do site anterior.
+// Links de navegação do rodapé.
 const linksDoRodape = [
   { rotulo: 'Soluções solares', caminho: '/solucoes' },
   { rotulo: 'Projetos e fotografias', caminho: '/projetos' },
@@ -52,7 +52,7 @@ export function Rodape() {
 
         <div className="mt-8 flex flex-col gap-x-6 border-t border-white/20 pt-6 text-sm text-white/90 sm:flex-row sm:flex-wrap sm:items-center">
           <Link to="/privacidade" className={classeDoLink}>Política de privacidade</Link>
-          <Link to="/admin" className={classeDoLink}>Área do administrador</Link>
+          <Link to="/admin" className={classeDoLink}>Área restrita</Link>
           <p className="py-3 sm:ml-auto">© {new Date().getFullYear()} Don Energy. Todos os direitos reservados.</p>
         </div>
       </div>

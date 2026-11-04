@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { cobrancaFioB, tarifaComImpostos, tarifaDoAno } from '../../motor/tarifa.ts';
 import { fracao, reaisPorKwh } from '../../motor/tipos.ts';
 
-// Exemplo resolvido (docs/arquitetura/motor-de-calculo.md): tarifas e impostos ilustrativos.
+// Exemplo resolvido: tarifas e impostos ilustrativos.
 const TARIFA = { te: reaisPorKwh('0.30'), tusd: reaisPorKwh('0.45'), fioB: reaisPorKwh('0.20'), adicionalBandeira: reaisPorKwh('0') };
 const TRIBUTOS = { icms: fracao('0.18'), pis: fracao('0.01'), cofins: fracao('0.045'), icmsSobreFioB: true };
 

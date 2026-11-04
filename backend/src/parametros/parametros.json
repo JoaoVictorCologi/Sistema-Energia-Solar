@@ -1,5 +1,5 @@
 {
-  "versao": "2026-11-03",
+  "versao": "2026-11-04",
   "calibracao": {
     "calibrada": false,
     "cnpj": "53859112000169",
@@ -22,11 +22,25 @@
   "performanceRatio": "0.78",
   "degradacaoAnualPadrao": "0.005",
   "simultaneidade": {
-    "B1": "0.30",
-    "B2": "0.40",
-    "B3": "0.40"
+    "B1": {
+      "padrao": "0.30",
+      "noite": "0.20",
+      "equilibrado": "0.30",
+      "dia": "0.45"
+    },
+    "B2": {
+      "padrao": "0.40",
+      "noite": "0.25",
+      "equilibrado": "0.40",
+      "dia": "0.50"
+    },
+    "B3": {
+      "padrao": "0.40",
+      "noite": "0.25",
+      "equilibrado": "0.40",
+      "dia": "0.55"
+    }
   },
-  "custoReferenciaPorKwp": "4000.00",
   "coberturaAlvo": "1.00",
   "horizonteAnos": 25,
   "validadeDosCreditosMeses": 60,
@@ -54,26 +68,54 @@
     "ano": 12,
     "fracaoDoInvestimento": "0.15"
   },
-  "proposta": {
-    "instalacaoPorKwp": "700.00",
-    "margem": "0.20",
-    "validadeDias": 10
+  "coberturaMaximaSobreConsumoAtual": "1.20",
+  "telhado": {
+    "areaPorModuloM2": "2.8",
+    "horasDeSol": {
+      "diaTodo": "1.00",
+      "de6a8": "0.92",
+      "de4a6": "0.80",
+      "menosDe4": "0.65"
+    },
+    "orientacao": {
+      "norte": "1.00",
+      "nordeste": "0.96",
+      "noroeste": "0.96",
+      "leste": "0.88",
+      "oeste": "0.88",
+      "sudeste": "0.80",
+      "sudoeste": "0.80",
+      "sul": "0.72",
+      "plano": "0.90"
+    },
+    "inclinacao": {
+      "plano": "0.90",
+      "pouca": "0.94",
+      "media": "1.00",
+      "muita": "0.95"
+    }
+  },
+  "contaDeLuz": {
+    "aliquotaImplicitaMinima": "0.10",
+    "aliquotaImplicitaMaxima": "0.45",
+    "toleranciaDaTarifa": "0.30"
   },
   "fontes": {
-    "calibracao": "PR e simultaneidade são valores típicos até a calibração com contas reais (Plano 1, tarefa 11, em docs/validacao.md). Com as contas, mude calibrada para true: o aviso de estimativa passa a aparecer só fora desta distribuidora.",
+    "calibracao": "PR e simultaneidade são valores típicos até a calibração com contas reais. Com as contas conferidas, mude calibrada para true: o aviso de estimativa passa a aparecer só fora desta distribuidora.",
     "fioBPercentualPorAno": "Lei 14.300/2022, art. 27. De 2029 em diante depende da valoração da ANEEL: cenário conservador de 100%, aplicado a todos os anos seguintes.",
     "consumoMinimoKwh": "REN ANEEL 1.000/2021 (custo de disponibilidade).",
-    "performanceRatio": "Perdas típicas de temperatura, sujeira, cabos e inversor. A calibrar com as contas reais (tarefa 11).",
+    "performanceRatio": "Perdas típicas de temperatura, sujeira, cabos e inversor. A calibrar com contas reais.",
     "degradacaoAnualPadrao": "Usada quando o datasheet do módulo não informa (0,5% ao ano).",
-    "simultaneidade": "Premissa de projeto. A calibrar com as contas reais (tarefa 11).",
-    "custoReferenciaPorKwp": "Estimativa do investimento na simulação pública; a tela avisa “valor final na proposta”. A calibrar com os preços de equipamentos da equipe.",
+    "simultaneidade": "Parte da geração consumida na hora, por subgrupo e pelo horário de uso informado pelo cliente (padrão quando ele não informa). Valores iniciais, a calibrar com contas reais.",
     "coberturaAlvo": "Fração do consumo anual que o sistema gera (100%).",
     "horizonteAnos": "Garantia típica de desempenho dos módulos (25 anos).",
     "validadeDosCreditosMeses": "REN ANEEL 1.000/2021: créditos de energia valem 60 meses.",
-    "moduloReferencia": "Módulo usado na simulação pública enquanto o catálogo (tarefa 14) não existe. A calibrar com os preços da equipe.",
-    "inversoresReferenciaKw": "Potências CA de inversores comuns no mercado, para escolher o da simulação pública (tarefa 14 troca pelo catálogo).",
-    "operacaoManutencaoAnual": "Sugestão inicial da especificação do motor: 0,5% do investimento por ano. A ajustar com orçamento real.",
-    "trocaDoInversor": "Troca no ano 12 (vida útil típica); custo estimado em 15% do investimento enquanto não há preço do catálogo. A calibrar.",
-    "proposta": "Preço da proposta = (módulos + inversor do catálogo + instalação por kWp) × (1 + margem); validade de 10 dias (Plano 1, tarefa 14). Instalação e margem ilustrativas, a calibrar com a equipe."
+    "moduloReferencia": "Módulo usado na simulação pública, que não depende do catálogo. A calibrar com os preços praticados.",
+    "inversoresReferenciaKw": "Potências CA de inversores comuns no mercado, para escolher o da simulação pública.",
+    "operacaoManutencaoAnual": "Sugestão inicial: 0,5% do investimento por ano. A ajustar com orçamento real.",
+    "trocaDoInversor": "Troca no ano 12 (vida útil típica). Na simulação pública, o custo é estimado em 15% do investimento; no orçamento, vale o preço do inversor. A calibrar.",
+    "coberturaMaximaSobreConsumoAtual": "Aumento de consumo previsto: o sistema é dimensionado até 120% do consumo atual, porque a distribuidora costuma pedir comprovação acima disso. A calibrar.",
+    "telhado": "Fatores sobre a geração para horas de sol direto, orientação e inclinação, e área por módulo de 550 W com folga. Valores iniciais, a calibrar.",
+    "contaDeLuz": "Faixas para aceitar a tarifa tirada da conta do cliente: pegam digitação errada sem recusar contas reais."
   }
 }

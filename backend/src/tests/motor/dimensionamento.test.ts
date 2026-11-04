@@ -62,4 +62,23 @@ describe('dimensionamento', () => {
     expect(resultado.kwpAlvo.toDecimalPlaces(3).toString()).toBe('1.686');
     expect(resultado.numeroModulos).toBe(4);
   });
+
+  it('área limita os módulos: fica no máximo e avisa', () => {
+    const resultado = dimensionar({ ...EXEMPLO, numeroMaximoDeModulos: 4 });
+
+    expect(resultado.numeroModulos).toBe(4);
+    expect(resultado.kwpInstalado.toString()).toBe('2.2');
+    expect(resultado.alertas.map((alerta) => alerta.codigo)).toContain('AREA_INSUFICIENTE');
+  });
+
+  it('área que comporta o necessário não muda nada', () => {
+    const resultado = dimensionar({ ...EXEMPLO, numeroMaximoDeModulos: 20 });
+
+    expect(resultado.numeroModulos).toBe(7);
+    expect(resultado.alertas).toEqual([]);
+  });
+
+  it('quantidade definida na revisão do operador vale sobre o cálculo', () => {
+    expect(dimensionar({ ...EXEMPLO, numeroFixoDeModulos: 9 }).numeroModulos).toBe(9);
+  });
 });

@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-// Título da aba por página; o do index.html vale até a primeira página abrir.
+// Define o título da aba. O título do index.html vale até a primeira página abrir.
 export function useTituloDaPagina(titulo: string): void {
   useEffect(() => {
     document.title = titulo;

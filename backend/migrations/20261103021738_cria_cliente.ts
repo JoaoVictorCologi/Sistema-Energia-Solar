@@ -1,6 +1,6 @@
 import type { Knex } from 'knex';
 
-// Criada na tarefa 5 porque o Plano 2 (usinas) depende dela; a tarefa 12 liga o cliente à simulação.
+// Cadastro de quem pede uma proposta. A ligação com a simulação vem numa migration posterior.
 export async function up(knex: Knex): Promise<void> {
   await knex.schema.createTable('cliente', (tabela) => {
     tabela.increments('id');

@@ -23,7 +23,7 @@ try {
 const { db } = await import('../src/database/conexao.ts');
 const { criarAdministrador } = await import('../src/services/authService.ts');
 
-// O eco do que é digitado passa por esta saída; na senha ela fica muda.
+// O eco da digitação passa por esta saída, que é silenciada durante a senha.
 let saidaMuda = false;
 const saida = new Writable({
   write(trecho, _codificacao, terminar) {

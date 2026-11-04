@@ -1,5 +1,5 @@
 // Grava o HSP mensal de cada município do Brasil a partir do CSV de sedes municipais do Atlas 2017.
-// O ZIP é baixado e descompactado à mão (licença CC BY-NC-ND do LABREN/INPE).
+// O ZIP é baixado e descompactado manualmente, porque o download exige aceitar a licença CC BY-NC-ND do LABREN/INPE.
 // Uso: npm run carregar-atlas -- <caminho>/tilted_latitude_means_sedes-munic.csv
 import { ErroDeConfiguracao, obterEnv } from '../src/config/env.ts';
 

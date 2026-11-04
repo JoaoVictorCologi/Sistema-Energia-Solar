@@ -1,3 +1,4 @@
+// Distribuidoras e o vínculo com os municípios, mantido pela importação semanal.
 import { db } from '../database/conexao.ts';
 import type { Distribuidora, Municipio, MunicipioDistribuidora } from '../tipos/tabelas.ts';
 
@@ -20,6 +21,7 @@ export interface DistribuidoraDoMunicipio {
 
 const LINHAS_POR_LOTE = 1_000;
 
+// Distribuidora nova entra com a sigla no lugar do nome; a importação de tarifas atualiza os dois depois.
 async function idsPorCnpj(transacao: typeof db, vinculos: VinculoParaGravar[], agora: Date): Promise<Map<string, number>> {
   const novas = [...new Map(vinculos.map(({ cnpj, sigla }) => [cnpj, { cnpj, sigla, nome: sigla, atualizado_em: agora }])).values()];
   await transacao<Distribuidora>('distribuidora').insert(novas).onConflict('cnpj').ignore();

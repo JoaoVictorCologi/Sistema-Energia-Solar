@@ -1,3 +1,4 @@
+// Irradiação por município, em horas de sol pleno (HSP) por dia.
 import { Decimal } from 'decimal.js';
 import { db } from '../database/conexao.ts';
 import type { IrradiacaoMunicipio } from '../tipos/tabelas.ts';

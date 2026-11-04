@@ -12,6 +12,8 @@ export interface PremissasDaSimulacao {
   performanceRatio: Fracao;
   simultaneidade: Fracao;
   coberturaAlvo: Fracao;
+  numeroMaximoDeModulos?: number;
+  numeroFixoDeModulos?: number;
   // Custo de disponibilidade da ligação (30, 50 ou 100 kWh).
   consumoMinimo: Kwh;
   // Lei 14.300, art. 27, por ano civil. Depois do último ano da tabela vale o último; antes do primeiro, zero.
@@ -66,7 +68,7 @@ export interface ResultadoSimulacao {
   alertas: Alerta[];
 }
 
-// Arredondar os módulos para cima já sobra um pouco de energia; só avisa quando vence mais de 1% da geração.
+// Arredondar os módulos para cima já gera alguma sobra de energia: só avisa quando vence mais de 1% da geração.
 const LIMITE_DE_CREDITOS_VENCIDOS = new Decimal('0.01');
 
 export function percentualFioB(tabela: Record<number, Fracao>, anoCivil: number): Fracao {
@@ -91,6 +93,7 @@ function criarTabelaDePrecos(entrada: EntradaSimulacao): (ano: number, anoCivil:
   };
 }
 
+// O ano da simulação conta a partir da conexão e define o reajuste; o ano civil define o percentual de Fio B e os dias do mês.
 function simularMeses(entrada: EntradaSimulacao, dimensionamento: Dimensionamento): MesSimulado[] {
   const { premissas } = entrada;
   const precosDoAno = criarTabelaDePrecos(entrada);
@@ -117,6 +120,7 @@ function simularMeses(entrada: EntradaSimulacao, dimensionamento: Dimensionament
   return meses;
 }
 
+// Operação, manutenção e troca do inversor seguem o reajuste da tarifa, para o fluxo todo ficar em valores nominais.
 function resumirAnos(meses: MesSimulado[], entrada: EntradaSimulacao): AnoSimulado[] {
   const { premissas, investimento } = entrada;
   const anos: AnoSimulado[] = [];
@@ -156,6 +160,7 @@ export function simular(entrada: EntradaSimulacao): ResultadoSimulacao {
   const dimensionamento = dimensionar({
     consumoMensal: entrada.consumoMensal, hspMensal: entrada.hspMensal, performanceRatio: premissas.performanceRatio,
     coberturaAlvo: premissas.coberturaAlvo, potenciaModuloW: entrada.modulo.potenciaW, inversoresKw: entrada.inversoresKw,
+    numeroMaximoDeModulos: premissas.numeroMaximoDeModulos, numeroFixoDeModulos: premissas.numeroFixoDeModulos,
   });
   const serieMensal = simularMeses(entrada, dimensionamento);
   const resumoAnual = resumirAnos(serieMensal, entrada);

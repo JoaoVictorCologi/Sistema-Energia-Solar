@@ -1,6 +1,6 @@
 import type { Knex } from 'knex';
 
-// Tarefa 14: catálogo de módulos e inversores com preço, e a proposta com o snapshot do que foi calculado.
+// Catálogo de módulos e inversores com preço, e a proposta com o snapshot do que foi calculado.
 export async function up(knex: Knex): Promise<void> {
   await knex.schema.createTable('equipamento', (tabela) => {
     tabela.increments('id');
@@ -9,7 +9,7 @@ export async function up(knex: Knex): Promise<void> {
     tabela.string('modelo', 120).notNullable();
     // Módulo: potência de pico (W). Inversor: potência CA nominal (W).
     tabela.decimal('potencia_w', 10, 1).notNullable();
-    // Só módulo; vazio usa a degradação padrão do parametros.json.
+    // Só módulo; vazio usa a degradação padrão dos parâmetros técnicos.
     tabela.decimal('degradacao_anual', 6, 4);
     tabela.decimal('preco', 12, 2).notNullable();
     tabela.boolean('ativo').notNullable().defaultTo(true);

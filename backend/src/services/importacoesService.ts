@@ -1,3 +1,4 @@
+// Execução e acompanhamento das importações de dados.
 import { listarJobs } from '../jobs/index.ts';
 import type { JobDeImportacao } from '../jobs/tipos.ts';
 import { ErroDeImportacao } from '../jobs/tipos.ts';

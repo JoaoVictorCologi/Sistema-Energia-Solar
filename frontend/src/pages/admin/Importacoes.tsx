@@ -15,7 +15,7 @@ const STATUS: Record<StatusDaImportacao, { rotulo: string; Icone: typeof CircleC
 
 const DIAS = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
 
-// Agenda do node-cron (horário de São Paulo) em texto: "0 6 * * *" → "Todo dia às 06:00".
+// Agenda do node-cron (horário de São Paulo) em texto: "0 6 * * *" vira "Todo dia às 06:00".
 function descreverAgenda(agenda: string): string {
   const [minuto, hora, diaDoMes, mes, diaDaSemana] = agenda.split(' ');
   if (![minuto, hora].every((parte) => /^\d+$/.test(parte)) || diaDoMes !== '*' || mes !== '*') return agenda;
@@ -44,7 +44,7 @@ export function Importacoes() {
   );
 }
 
-// A mensagem lista o que a importação descartou e pode ter centenas de itens: mostra o começo e o resto sob demanda.
+// A mensagem lista o que a importação descartou e pode ter centenas de itens: exibe o começo e o restante sob demanda.
 function Mensagem({ texto }: { texto: string }) {
   if (texto.length <= 240) return <>{texto}</>;
   return (

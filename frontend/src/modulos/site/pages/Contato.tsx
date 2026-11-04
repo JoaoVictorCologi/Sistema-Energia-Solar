@@ -6,11 +6,11 @@ import { useTituloDaPagina } from '../../../hooks/useTituloDaPagina.ts';
 import { FormularioContato } from '../components/FormularioContato.tsx';
 import { MapaContato } from '../components/MapaContato.tsx';
 
-// Página de contato herdada do site Don Energy (app/contato/page.tsx).
+// Página de contato: formulário, canais de atendimento e mapa.
 export function Contato() {
   useTituloDaPagina('Contato — Don Energy');
   const [parametros] = useSearchParams();
-  // ?servico=<slug> vem dos botões das páginas de solução e já marca o perfil no formulário.
+  // ?servico=<slug> vem dos botões das páginas de solução e marca o perfil no formulário.
   const perfil = solucoes.find((solucao) => solucao.slug === parametros.get('servico'))?.slug ?? '';
 
   return (

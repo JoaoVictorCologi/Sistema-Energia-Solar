@@ -1,5 +1,5 @@
-import { CircleCheck, CircleX, Send } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { CircleCheck, CircleX, PencilLine, Send } from 'lucide-react';
+import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import type { StatusDaProposta } from '../../services/api.ts';
 
@@ -17,7 +17,7 @@ export function Titulo({ sobre, children, acoes }: { sobre?: string; children: R
   );
 }
 
-// Enquanto carrega, com erro ou sem dados: a tela mostra isto no lugar do conteúdo.
+// Estado de uma busca: exibido no lugar do conteúdo enquanto carrega ou quando há erro.
 export function EstadoDaCarga({ carregando, erro, aoTentarDeNovo }: { carregando: boolean; erro: string | null; aoTentarDeNovo: () => void }) {
   if (erro) {
     return (
@@ -39,14 +39,15 @@ export function Cartao({ children, className = '' }: { children: ReactNode; clas
 }
 
 const STATUS = {
+  rascunho: { rotulo: 'Rascunho', Icone: PencilLine, classe: 'border-border text-muted-foreground' },
   enviada: { rotulo: 'Enviada', Icone: Send, classe: 'border-brand-blue/30 text-brand-blue' },
   aceita: { rotulo: 'Aceita', Icone: CircleCheck, classe: 'border-green-700/40 text-green-800' },
   recusada: { rotulo: 'Recusada', Icone: CircleX, classe: 'border-red-700/30 text-red-800' },
 } as const;
 
-export const ROTULOS_DO_STATUS: Record<StatusDaProposta, string> = { enviada: 'Enviada', aceita: 'Aceita', recusada: 'Recusada' };
+export const ROTULOS_DO_STATUS: Record<StatusDaProposta, string> = { rascunho: 'Rascunho', enviada: 'Enviada', aceita: 'Aceita', recusada: 'Recusada' };
 
-// Ícone e texto junto da cor: o status nunca depende só da cor.
+// Ícone e texto acompanham a cor: o status nunca depende apenas dela.
 export function SeloDeStatus({ status, vencida = false }: { status: StatusDaProposta; vencida?: boolean }) {
   const { rotulo, Icone, classe } = STATUS[status];
   return (
@@ -59,6 +60,7 @@ export function SeloDeStatus({ status, vencida = false }: { status: StatusDaProp
   );
 }
 
+// Não aparece quando tudo cabe em uma página. `linkDaPagina` preserva os filtros da URL.
 export function Paginacao({ pagina, porPagina, total, linkDaPagina }: { pagina: number; porPagina: number; total: number; linkDaPagina: (pagina: number) => string }) {
   const ultima = Math.max(1, Math.ceil(total / porPagina));
   if (ultima === 1) return null;
@@ -89,3 +91,21 @@ export function Tabela({ legenda, children }: { legenda: string; children: React
 
 export const classeDoBotaoSecundario =
   'inline-flex min-h-11 items-center justify-center gap-2 rounded-sm border border-brand-blue px-4 text-sm font-semibold text-brand-blue hover:bg-brand-soft disabled:opacity-60';
+
+export const classeDoBotaoPerigoso =
+  'inline-flex min-h-11 items-center justify-center gap-2 rounded-sm border border-red-700/50 px-4 text-sm font-semibold text-red-800 hover:bg-red-50 disabled:opacity-60';
+
+// Ação irreversível: o primeiro clique apenas pede a confirmação, ao lado do botão.
+export function BotaoComConfirmacao({ rotulo, pergunta, aoConfirmar, ocupado, classe = classeDoBotaoSecundario }: {
+  rotulo: ReactNode; pergunta: string; aoConfirmar: () => void; ocupado: boolean; classe?: string;
+}) {
+  const [confirmando, setConfirmando] = useState(false);
+  if (!confirmando) return <button type="button" onClick={() => setConfirmando(true)} disabled={ocupado} className={classe}>{rotulo}</button>;
+  return (
+    <span role="group" aria-label={pergunta} className="inline-flex flex-wrap items-center gap-2">
+      <span className="text-sm font-semibold text-brand-ink">{pergunta}</span>
+      <button type="button" onClick={() => { setConfirmando(false); aoConfirmar(); }} disabled={ocupado} className={classe}>Confirmar</button>
+      <button type="button" onClick={() => setConfirmando(false)} className="inline-flex min-h-11 items-center px-2 text-sm font-semibold text-muted-foreground underline underline-offset-4">Cancelar</button>
+    </span>
+  );
+}

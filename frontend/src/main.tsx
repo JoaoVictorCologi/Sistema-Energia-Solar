@@ -1,3 +1,4 @@
+// Ponto de entrada: monta a aplicação no elemento #raiz do index.html.
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App.tsx';

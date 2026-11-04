@@ -8,6 +8,7 @@ import { NaoEncontrada } from './NaoEncontrada.tsx';
 
 const classeDoCaminho = 'inline-flex min-h-11 items-center underline underline-offset-4';
 
+// Página de uma solução. Um slug desconhecido mostra a página não encontrada.
 export function DetalheSolucao() {
   const { slug } = useParams();
   const solucao = solucoes.find((item) => item.slug === slug);

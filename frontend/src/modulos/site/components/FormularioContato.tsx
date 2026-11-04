@@ -4,8 +4,7 @@ import { CaixaDeAceite, CampoDeTexto, GrupoDeOpcoes } from '../../../components/
 import { linkDoWhatsApp } from '../../../dados/empresa.ts';
 import { solucoes } from '../../../dados/solucoes.ts';
 
-// Herdado do site Don Energy: o formulário só monta a mensagem e abre o WhatsApp; nada é gravado.
-// O Plano 6 (tarefas 2 e 3) troca o envio pelo POST /api/site/contato.
+// O formulário apenas monta a mensagem e abre o WhatsApp; nada é gravado.
 
 interface DadosDoContato {
   nome: string;
@@ -55,7 +54,7 @@ function MensagemPronta({ link }: { link: string }) {
   );
 }
 
-// `compacto`: cartão com borda (página de contato); sem ele, faixa cinza da página inicial.
+// `compacto`: cartão com borda, na página de contato; sem ele, faixa cinza da página inicial.
 export function FormularioContato({ perfilInicial = '', compacto = false }: { perfilInicial?: string; compacto?: boolean }) {
   const [dados, setDados] = useState<DadosDoContato>({
     nome: '', telefone: '', perfil: perfilInicial, cidade: '', consumoOuConta: '', consentimento: false,
@@ -73,7 +72,7 @@ export function FormularioContato({ perfilInicial = '', compacto = false }: { pe
     setErros(encontrados);
     if (Object.keys(encontrados).length > 0) return;
     const link = linkDoWhatsApp(montarMensagem(dados));
-    // Abre ainda dentro do clique; fora dele, o navegador bloquearia como pop-up.
+    // Precisa abrir dentro do clique: fora dele, o navegador bloquearia como pop-up.
     window.open(link, '_blank', 'noopener,noreferrer');
     setLinkPronto(link);
   }

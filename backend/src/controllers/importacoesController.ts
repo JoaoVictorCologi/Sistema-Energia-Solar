@@ -1,3 +1,4 @@
+// Situação das importações de dados e execução sob demanda.
 import type { Request, Response } from 'express';
 import { z } from 'zod';
 import { ErroHttp } from '../middlewares/erros.ts';

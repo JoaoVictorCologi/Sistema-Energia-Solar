@@ -13,6 +13,6 @@ coverage/
 .DS_Store
 *.log
 
-# documentação e regras da IA: ficam fora dos commits até o fim do Plano 1
+# anotações internas de trabalho: não vão para o repositório
 /docs/
 /AGENTS.md

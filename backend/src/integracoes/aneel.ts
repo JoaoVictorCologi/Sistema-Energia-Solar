@@ -42,6 +42,7 @@ const esquemaFioB = z.object({
 export type TarifaDaAneel = z.infer<typeof esquemaTarifa>;
 export type FioBDaAneel = z.infer<typeof esquemaFioB>;
 
+// Procura pelo nome, para não depender de um id fixo na fonte.
 async function acharRecurso(conjunto: string, nome: string): Promise<RecursoDoCkan | undefined> {
   const recursos = await buscarRecursosDoPacote(conjunto);
   return recursos.find((recurso) => recurso.nome === nome && recurso.datastoreAtivo);

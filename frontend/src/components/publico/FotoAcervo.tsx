@@ -1,6 +1,6 @@
 import { fotoPorNumero } from '../../dados/fotos.ts';
 
-// Recorte de 640 px para composição de página; o número da foto não define o perfil da obra.
+// Foto do acervo em recorte de 640 px, para composição de página. O número da foto não indica o perfil da instalação.
 export function FotoAcervo({ numero, className = '', carregarJa = false }: { numero: string; className?: string; carregarJa?: boolean }) {
   const foto = fotoPorNumero(numero);
   return (

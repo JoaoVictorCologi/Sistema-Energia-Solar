@@ -1,4 +1,4 @@
-// Seção 7 da especificação: VPL, TIR e payback. O fluxo começa no ano 0 (investimento, negativo).
+// Indicadores financeiros: VPL, TIR, payback e parcela. O fluxo de caixa começa no ano 0 (investimento, negativo).
 import { Decimal } from 'decimal.js';
 import { fracao, reais, type Fracao, type Reais } from './tipos.ts';
 
@@ -55,6 +55,15 @@ export function payback(fluxo: Decimal[]): Decimal | null {
     if (acumulado.gte(0)) return new Decimal(ano - 1).plus(anterior.neg().div(fluxo[ano]));
   }
   return null;
+}
+
+// Tabela Price: parcela = P × i ÷ (1 − (1 + i)^−n); sem juros, P ÷ n.
+// Na carência não se paga nada e os juros se acumulam: o principal cresce por (1 + i)^meses.
+export function parcelaPrice(principal: Decimal, taxaMensal: Decimal, parcelas: number, mesesDeCarencia = 0): Reais {
+  if (taxaMensal.isZero()) return reais(principal.div(parcelas));
+  const fator = taxaMensal.plus(1);
+  const corrigido = principal.times(fator.pow(mesesDeCarencia));
+  return reais(corrigido.times(taxaMensal).div(new Decimal(1).minus(fator.pow(-parcelas))));
 }
 
 export function calcularIndicadores(fluxo: Reais[], taxaDesconto: Fracao): Indicadores {

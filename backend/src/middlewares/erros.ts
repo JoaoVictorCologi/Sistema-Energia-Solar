@@ -1,3 +1,4 @@
+// Tratamento central de erros da API.
 import type { ErrorRequestHandler, RequestHandler } from 'express';
 
 // Erro previsto pela aplicação: vira resposta { error: { code, message, fields? } } com o status indicado.

@@ -1,3 +1,4 @@
+// Login, logout e usuário da sessão atual.
 import type { CookieOptions, Request, Response } from 'express';
 import { z } from 'zod';
 import { obterEnv } from '../config/env.ts';

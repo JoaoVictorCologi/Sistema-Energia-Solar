@@ -1,3 +1,4 @@
+// Registro dos módulos: partes do sistema que entram sem alterar o núcleo.
 import type { ReactElement } from 'react';
 import { moduloCatalogo } from './catalogo/index.tsx';
 import { moduloDesempenho } from './desempenho/index.tsx';
@@ -20,7 +21,7 @@ export interface ItemDeMenu {
 
 // Rotas públicas entram no layout do site (cabeçalho e rodapé), com caminho completo: '/sobre'.
 // Rotas do admin entram em /admin, já protegidas pelo login, com caminho completo: '/admin/usinas'.
-// Um módulo que registra '/' (Plano 6) substitui o redirecionamento padrão para o simulador.
+// Um módulo que registra '/' substitui o redirecionamento padrão para o simulador.
 export interface ModuloDoFrontend {
   rotasPublicas?: RotaDeModulo[];
   rotasAdmin?: RotaDeModulo[];
@@ -28,7 +29,7 @@ export interface ModuloDoFrontend {
   menuAdmin?: ItemDeMenu[];
 }
 
-// PONTO DE EXTENSÃO: cada módulo (Plano 2 em diante) acrescenta uma linha com as suas rotas e itens de menu.
+// PONTO DE EXTENSÃO: cada módulo acrescenta aqui uma linha com as suas rotas e itens de menu.
 export const modulosDoFrontend: ModuloDoFrontend[] = [
   moduloUsinas,
   moduloCatalogo,

@@ -1,4 +1,4 @@
-// Fotografias do acervo Don Energy (frontend/public/fotos). 11 fotos não são 11 obras:
+// Fotografias do acervo Don Energy (public/fotos). 11 fotos não significam 11 obras:
 // não atribuir cidade, potência ou tipo de cliente sem dado confirmado.
 
 export interface Foto {
@@ -30,7 +30,7 @@ export function fotoPorNumero(numero: string): Foto {
   return foto;
 }
 
-// Variantes de 480, 960 e 1440 px geradas a partir das originais (que ficam na branch legado/site-don-energy).
+// Variantes de 480, 960 e 1440 px geradas a partir das fotos originais.
 export function caminhoDoPortfolio(foto: Foto, largura: 480 | 960 | 1440): string {
   return `/fotos/portfolio/foto-${foto.numero}-${largura}.webp`;
 }

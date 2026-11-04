@@ -8,8 +8,8 @@ export interface Carga<Dados> {
   recarregar: () => void;
 }
 
-// Busca os dados de uma tela da área restrita e refaz a busca quando `chave` muda (filtro, página, id).
-// Resposta que chega depois de a chave mudar é ignorada.
+// Busca os dados de uma tela e repete a busca quando `chave` muda (filtro, página, id).
+// Respostas que chegam depois da troca de chave são descartadas.
 export function useCarregar<Dados>(buscar: () => Promise<Dados>, chave: string): Carga<Dados> {
   const [dados, setDados] = useState<Dados | null>(null);
   const [erro, setErro] = useState<string | null>(null);
@@ -26,7 +26,7 @@ export function useCarregar<Dados>(buscar: () => Promise<Dados>, chave: string):
       .catch((falha) => { if (atual) setErro(falha instanceof ErroDaApi ? falha.message : 'Não foi possível carregar os dados.'); })
       .finally(() => { if (atual) setCarregando(false); });
     return () => { atual = false; };
-    // `buscar` muda a cada render; quem decide quando buscar de novo é a chave.
+    // `buscar` é recriada a cada renderização; é a chave que determina uma nova busca.
   }, [chave, versao]);
 
   return { dados, erro, carregando, recarregar };

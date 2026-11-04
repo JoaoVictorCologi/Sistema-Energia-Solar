@@ -1,3 +1,4 @@
+// Validação de entrada com zod. Recusar campos desconhecidos impede o cliente de enviar preço ou premissa.
 import type { RequestHandler } from 'express';
 import { z } from 'zod';
 import { ErroHttp } from './erros.ts';

@@ -21,7 +21,7 @@ describe('parametros.json', () => {
   });
 
   it('recusa número sem aspas, que perderia precisão', () => {
-    const invalido = comAlteracao((copia) => { (copia as Record<string, unknown>).custoReferenciaPorKwp = 4000; });
-    expect(() => lerParametros(invalido)).toThrow(/custoReferenciaPorKwp/);
+    const invalido = comAlteracao((copia) => { (copia as Record<string, unknown>).coberturaMaximaSobreConsumoAtual = 1.2; });
+    expect(() => lerParametros(invalido)).toThrow(/coberturaMaximaSobreConsumoAtual/);
   });
 });

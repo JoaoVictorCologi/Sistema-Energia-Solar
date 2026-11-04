@@ -4,7 +4,7 @@ import { empresa, linkDaRota, linkDoMapaIncorporado } from '../../../dados/empre
 
 const endereco = `${empresa.endereco.linha1}, ${empresa.endereco.linha2}`;
 
-// O mapa do Google só carrega quando o visitante pede: abrir o mapa conecta o navegador ao Google (ver Privacidade).
+// O mapa do Google só carrega a pedido do visitante, porque abri-lo conecta o navegador ao Google.
 export function MapaContato() {
   const [visivel, setVisivel] = useState(false);
 

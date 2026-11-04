@@ -1,5 +1,5 @@
-// Tributos da conta de luz por UF (Plano 5, tarefa 4): o ICMS depende do estado do cliente, não da distribuidora.
-// Validado ao carregar, como o parametros.json: UF faltando ou alíquota fora da faixa impede o backend de subir.
+// Tributos da conta de luz por UF: o ICMS depende do estado do cliente, não da distribuidora.
+// Validado ao carregar, como as premissas técnicas: UF faltando ou alíquota fora da faixa impede o backend de subir.
 import { Decimal } from 'decimal.js';
 import { z } from 'zod';
 import dados from './tributos-por-uf.json' with { type: 'json' };

@@ -6,7 +6,7 @@ import { solucoes } from '../../../dados/solucoes.ts';
 import { useTituloDaPagina } from '../../../hooks/useTituloDaPagina.ts';
 import { FormularioContato } from '../components/FormularioContato.tsx';
 
-// Página inicial herdada do site Don Energy (app/page.tsx da branch legado/site-don-energy).
+// Página inicial do site.
 export function Inicio() {
   useTituloDaPagina('Don Energy — Energia Solar em Mococa e Região');
 
@@ -115,7 +115,7 @@ function SecaoSolucoes() {
   );
 }
 
-// Destaque editorial de três fotos; não é contagem nem classificação de projetos.
+// Destaque editorial de três fotos; não representa contagem nem classificação de projetos.
 const fotosEmDestaque = ['09', '01', '11'];
 
 function SecaoFotos() {

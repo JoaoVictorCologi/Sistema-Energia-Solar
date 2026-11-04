@@ -1,2 +1,3 @@
+/* Importa o Tailwind e, em seguida, os tokens da identidade visual. */
 @import "tailwindcss";
 @import "./tokens.css";

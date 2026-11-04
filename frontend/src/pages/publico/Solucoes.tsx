@@ -3,6 +3,7 @@ import { CartaoSolucao } from '../../components/publico/CartaoSolucao.tsx';
 import { solucoes } from '../../dados/solucoes.ts';
 import { useTituloDaPagina } from '../../hooks/useTituloDaPagina.ts';
 
+// Lista das soluções e as necessidades de cada perfil.
 export function Solucoes() {
   useTituloDaPagina('Soluções em energia solar — Don Energy');
 

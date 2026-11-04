@@ -32,6 +32,28 @@ describe('POST /api/clientes (pedido de proposta)', () => {
     });
   });
 
+  it('guarda o endereço, o contato preferido e a autorização, todos opcionais', async () => {
+    const endereco = { logradouro: 'Rua das Flores', numero: '120', complemento: 'Casa 2', bairro: 'Centro' };
+
+    const resposta = await request(criarApp()).post('/api/clientes').send({ ...PEDIDO, endereco, contatoPreferido: 'whatsapp', melhorHorario: 'tarde', autorizaUsoParaCalibracao: true });
+
+    expect(resposta.status).toBe(201);
+    expect(registrarPedidoDeProposta).toHaveBeenCalledWith(expect.objectContaining({ endereco, contatoPreferido: 'whatsapp', melhorHorario: 'tarde', autorizaUsoParaCalibracao: true }));
+  });
+
+  it.each([
+    ['contato desconhecido', { contatoPreferido: 'pombo' }, 'contatoPreferido'],
+    ['horário desconhecido', { melhorHorario: 'madrugada' }, 'melhorHorario'],
+    ['endereço sem rua', { endereco: { numero: '10' } }, 'endereco.logradouro'],
+    ['campo extra no endereço', { endereco: { logradouro: 'Rua A', cidade: 'Mococa' } }, 'cidade'],
+  ])('%s → 400, sem gravar', async (_caso, extra, campo) => {
+    const resposta = await request(criarApp()).post('/api/clientes').send({ ...PEDIDO, ...extra });
+
+    expect(resposta.status).toBe(400);
+    expect(Object.keys(resposta.body.error.fields)).toContain(campo);
+    expect(registrarPedidoDeProposta).not.toHaveBeenCalled();
+  });
+
   it('a resposta só confirma o recebimento, sem dados de cliente', async () => {
     const resposta = await request(criarApp()).post('/api/clientes').send(PEDIDO);
 

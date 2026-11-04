@@ -1,9 +1,11 @@
+// Agendador das importações: agrupa os jobs por agenda e dispara cada grupo no fuso de São Paulo.
 import cron from 'node-cron';
 import { registrarImportacao } from '../services/importacoesService.ts';
 import { listarJobs } from './index.ts';
 import type { JobDeImportacao } from './tipos.ts';
 
 // Jobs com a mesma agenda rodam um depois do outro, na ordem da lista (ANEEL antes do Banco Central).
+// A falha de um não impede os seguintes.
 async function executarEmSequencia(jobs: JobDeImportacao[]): Promise<void> {
   for (const job of jobs) {
     try {
@@ -19,6 +21,7 @@ export function iniciarAgendador(): void {
   const jobsPorAgenda = new Map<string, JobDeImportacao[]>();
   for (const job of listarJobs()) jobsPorAgenda.set(job.agenda, [...(jobsPorAgenda.get(job.agenda) ?? []), job]);
   for (const [agenda, jobs] of jobsPorAgenda) {
+    // noOverlap: uma execução longa não se sobrepõe à seguinte.
     cron.schedule(agenda, () => executarEmSequencia(jobs), { timezone: 'America/Sao_Paulo', noOverlap: true });
   }
 }

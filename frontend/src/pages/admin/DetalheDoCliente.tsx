@@ -2,12 +2,15 @@ import { useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { GerarProposta } from '../../components/admin/GerarProposta.tsx';
 import { Cartao, classeDaLinha, classeDoBotaoSecundario, classeDoCabecalho, EstadoDaCarga, SeloDeStatus, Tabela, Titulo } from '../../components/admin/Pecas.tsx';
+import { RespostasDoCliente } from '../../components/admin/RespostasDoCliente.tsx';
 import { NOMES_DA_LIGACAO } from '../../components/simulador/BlocosDoResultado.tsx';
+import { NOMES_DO_CONTATO, NOMES_DO_HORARIO } from '../../dados/perguntasDoSimulador.ts';
 import { useCarregar } from '../../hooks/useCarregar.ts';
 import { useTituloDaPagina } from '../../hooks/useTituloDaPagina.ts';
 import { buscarCliente, type DetalheDoCliente as Detalhe, type SimulacaoDoCliente } from '../../services/api.ts';
 import { formatarData, formatarDataEHora, formatarDiaDoInstante, formatarNumero, formatarReais } from '../../utils/formatar.ts';
 
+// Reúne o necessário para orçar: contato, endereço, respostas de cada simulação e orçamentos.
 export function DetalheDoCliente() {
   const id = Number(useParams().id);
   const { dados, erro, carregando, recarregar } = useCarregar(() => buscarCliente(id), String(id));
@@ -31,6 +34,12 @@ export function DetalheDoCliente() {
   );
 }
 
+function descreverEndereco(endereco: Detalhe['cliente']['endereco']): string {
+  if (!endereco) return 'Não informado';
+  const { logradouro, numero, complemento, bairro } = endereco;
+  return [[logradouro, numero].filter(Boolean).join(', '), complemento, bairro].filter(Boolean).join(' · ');
+}
+
 function Contato({ cliente }: { cliente: Detalhe['cliente'] }) {
   return (
     <Cartao>
@@ -41,11 +50,16 @@ function Contato({ cliente }: { cliente: Detalhe['cliente'] }) {
         <div><dt className="text-muted-foreground">CEP</dt><dd className="mt-1 font-medium">{cliente.cep.replace(/^(\d{5})(\d{3})$/, '$1-$2')}</dd></div>
         <div><dt className="text-muted-foreground">Pedido em</dt><dd className="mt-1 font-medium">{formatarDiaDoInstante(cliente.criadoEm)}</dd></div>
         <div><dt className="text-muted-foreground">Aceite do uso dos dados (LGPD)</dt><dd className="mt-1 font-medium">{formatarDataEHora(cliente.aceiteEm)}</dd></div>
+        <div className="sm:col-span-2 lg:col-span-3"><dt className="text-muted-foreground">Endereço da instalação</dt><dd className="mt-1 font-medium">{descreverEndereco(cliente.endereco)}</dd></div>
+        <div><dt className="text-muted-foreground">Contato preferido</dt><dd className="mt-1 font-medium">{cliente.contatoPreferido ? NOMES_DO_CONTATO[cliente.contatoPreferido] : 'Não informado'}</dd></div>
+        <div><dt className="text-muted-foreground">Melhor horário</dt><dd className="mt-1 font-medium">{cliente.melhorHorario ? NOMES_DO_HORARIO[cliente.melhorHorario] : 'Não informado'}</dd></div>
+        <div><dt className="text-muted-foreground">Autoriza uso para calibração</dt><dd className="mt-1 font-medium">{cliente.autorizaUsoParaCalibracao ? 'Sim' : 'Não'}</dd></div>
       </dl>
     </Cartao>
   );
 }
 
+// Uma simulação, com as respostas do cliente e a criação do orçamento a partir dela.
 function Simulacao({ simulacao }: { simulacao: SimulacaoDoCliente }) {
   const [gerando, setGerando] = useState(false);
   return (
@@ -53,7 +67,7 @@ function Simulacao({ simulacao }: { simulacao: SimulacaoDoCliente }) {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h3 className="font-heading text-lg font-medium text-brand-blue">
-            {formatarNumero(simulacao.kwpInstalado, 2)} kWp · {simulacao.cidade}
+            {formatarNumero(simulacao.kwpInstalado, 2)} kWp · {simulacao.cidade}{simulacao.distribuidora && ` · ${simulacao.distribuidora}`}
           </h3>
           <p className="mt-1 text-sm text-muted-foreground">
             {formatarNumero(simulacao.consumoMedioKwh)} kWh/mês, ligação {NOMES_DA_LIGACAO[simulacao.tipoLigacao]} ·
@@ -61,8 +75,10 @@ function Simulacao({ simulacao }: { simulacao: SimulacaoDoCliente }) {
             simulada em {formatarDiaDoInstante(simulacao.criadaEm)}
           </p>
         </div>
-        {!gerando && <button type="button" onClick={() => setGerando(true)} className={classeDoBotaoSecundario}>Gerar proposta</button>}
+        {!gerando && <button type="button" onClick={() => setGerando(true)} className={classeDoBotaoSecundario}>Criar orçamento</button>}
       </div>
+      <h4 className="mt-4 text-sm font-semibold text-brand-ink">Respostas do cliente</h4>
+      <RespostasDoCliente respostas={simulacao.respostas} />
       {gerando && <div className="mt-5 border-t border-border pt-5"><GerarProposta codigoDaSimulacao={simulacao.codigo} /></div>}
     </li>
   );
@@ -82,10 +98,10 @@ function Simulacoes({ simulacoes }: { simulacoes: SimulacaoDoCliente[] }) {
 function Propostas({ propostas }: { propostas: Detalhe['propostas'] }) {
   return (
     <section aria-labelledby="titulo-propostas">
-      <h2 id="titulo-propostas" className="mb-4 font-heading text-xl font-medium text-brand-blue">Propostas</h2>
-      {propostas.length === 0 ? <p className="text-sm text-muted-foreground">Nenhuma proposta gerada ainda.</p> : (
-        <Tabela legenda="Propostas do cliente">
-          <thead className={classeDoCabecalho}><tr><th scope="col">Proposta</th><th scope="col">Status</th><th scope="col">Investimento</th><th scope="col">Válida até</th><th scope="col">Gerada em</th></tr></thead>
+      <h2 id="titulo-propostas" className="mb-4 font-heading text-xl font-medium text-brand-blue">Orçamentos</h2>
+      {propostas.length === 0 ? <p className="text-sm text-muted-foreground">Nenhum orçamento criado ainda.</p> : (
+        <Tabela legenda="Orçamentos do cliente">
+          <thead className={classeDoCabecalho}><tr><th scope="col">Orçamento</th><th scope="col">Status</th><th scope="col">Valor final</th><th scope="col">Válido até</th><th scope="col">Criado em</th></tr></thead>
           <tbody>
             {propostas.map((proposta) => (
               <tr key={proposta.id} className={classeDaLinha}>

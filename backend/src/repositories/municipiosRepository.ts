@@ -1,3 +1,4 @@
+// Municípios do Brasil. A chave é o código IBGE.
 import { db } from '../database/conexao.ts';
 import type { Municipio } from '../tipos/tabelas.ts';
 

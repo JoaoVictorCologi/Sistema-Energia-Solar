@@ -3,7 +3,7 @@ import { caminhoDoPortfolio, LEGENDA_DO_ACERVO, srcSetDoPortfolio, type Foto } f
 
 const tamanhosDaMiniatura = '(min-width: 1200px) 350px, (min-width: 1024px) 30vw, (min-width: 768px) 45vw, 100vw';
 
-// Grade de miniaturas; a foto escolhida abre ampliada num <dialog> nativo (Esc fecha e o foco volta à miniatura).
+// Grade de miniaturas. A foto escolhida abre ampliada em um <dialog> nativo: Esc fecha e o foco volta à miniatura.
 export function GaleriaFotos({ fotos }: { fotos: Foto[] }) {
   const dialogo = useRef<HTMLDialogElement>(null);
   const [ampliada, setAmpliada] = useState<Foto | null>(null);

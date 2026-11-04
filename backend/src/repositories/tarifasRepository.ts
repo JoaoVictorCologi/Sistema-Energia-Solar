@@ -1,3 +1,4 @@
+// Tarifas por vigência. Vigência nova é linha nova, para o histórico ficar preservado.
 import { Decimal } from 'decimal.js';
 import type { Knex } from 'knex';
 import { db } from '../database/conexao.ts';

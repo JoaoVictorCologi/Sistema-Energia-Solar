@@ -2,7 +2,7 @@ import { Link } from 'react-router';
 import { FormularioSimulacao } from '../../components/simulador/FormularioSimulacao.tsx';
 import { useTituloDaPagina } from '../../hooks/useTituloDaPagina.ts';
 
-// Mesmo layout do simulador do site anterior: formulário à esquerda e explicação à direita.
+// Página do simulador: formulário à esquerda e explicação das fontes de dados à direita.
 export function Simulador() {
   useTituloDaPagina('Simulador solar — Don Energy');
 
@@ -14,16 +14,13 @@ export function Simulador() {
           Um primeiro olhar.<br />Uma conversa mais clara.
         </h1>
         <p className="mt-7 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-          Informe o CEP, o tipo de ligação e o consumo médio. Em segundos você vê o sistema indicado, a economia estimada pelas regras
-          da Lei 14.300 e o tempo de retorno.
+          Pegue a última conta de luz e responda o que souber sobre a sua casa: quem mora nela sabe o que nenhum mapa mostra.
+          Se não souber alguma resposta, marque “não sei” e usamos um valor típico.
         </p>
       </section>
 
-      <div className="site-shell grid items-start gap-10 pb-20 lg:grid-cols-[1.3fr_0.8fr] lg:gap-20">
-        <section aria-labelledby="titulo-do-formulario" className="rounded-md border border-border bg-background p-6 sm:p-8">
-          <h2 id="titulo-do-formulario" className="mb-8 font-heading text-2xl font-medium tracking-tight text-brand-blue">Seus dados de consumo</h2>
-          <FormularioSimulacao />
-        </section>
+      <div className="site-shell grid items-start gap-10 pb-20 lg:grid-cols-[1.7fr_0.8fr] lg:gap-12">
+        <FormularioSimulacao />
         <ExplicacaoDoCalculo />
       </div>
     </>
@@ -32,7 +29,7 @@ export function Simulador() {
 
 function ExplicacaoDoCalculo() {
   return (
-    <aside aria-labelledby="titulo-da-explicacao" className="rounded-md bg-brand-soft p-6 sm:p-8 lg:p-10">
+    <aside aria-labelledby="titulo-da-explicacao" className="rounded-md bg-brand-soft p-6 sm:p-8 lg:sticky lg:top-[calc(var(--header-height)+1.5rem)]">
       <p className="site-eyebrow">De onde vêm os números</p>
       <h2 id="titulo-da-explicacao" className="font-heading text-2xl leading-snug font-medium tracking-tight text-brand-blue">
         Dados oficiais.<br />Regras da Lei 14.300.
@@ -45,6 +42,10 @@ function ExplicacaoDoCalculo() {
         <div>
           <h3 className="font-heading text-base font-medium text-brand-blue">Sol do seu município</h3>
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Irradiação mensal do Atlas Brasileiro de Energia Solar (INPE).</p>
+        </div>
+        <div>
+          <h3 className="font-heading text-base font-medium text-brand-blue">O que você sabe da sua casa</h3>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Sua conta de luz, os horários de consumo e o sol no telhado trocam valores típicos pelos reais.</p>
         </div>
         <div>
           <h3 className="font-heading text-base font-medium text-brand-blue">Uma estimativa, não uma proposta</h3>

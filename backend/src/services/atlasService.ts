@@ -1,7 +1,7 @@
 // Carga da irradiação do Atlas Brasileiro de Energia Solar 2017 (LABREN/INPE), CSV de sedes municipais,
 // plano inclinado igual à latitude. Colunas do CSV: ID;LON;LAT;NAME;CLASS;STATE;ANNUAL;JAN;…;DEC,
 // em Wh/m² por dia. O ID é a célula da grade, não o código IBGE: o município casa por nome sem acento + UF.
-// Carga nacional (Plano 5): todas as UFs de uma vez.
+// A carga cobre todas as UFs de uma vez.
 import { createReadStream } from 'node:fs';
 import { parse } from 'csv-parse';
 import { Decimal } from 'decimal.js';
@@ -13,7 +13,7 @@ import { listarTodosOsMunicipios, type MunicipioParaGravar } from '../repositori
 const COLUNAS_DOS_MESES = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 const COLUNAS_OBRIGATORIAS = ['NAME', 'STATE', 'ANNUAL', ...COLUNAS_DOS_MESES];
 
-// Faixa física do HSP mensal e tolerância da média dos meses contra o anual (docs/arquitetura/fontes-de-dados.md).
+// Faixa física do HSP mensal e tolerância da média dos meses contra o valor anual.
 const HSP_MINIMO = new Decimal('2.0');
 const HSP_MAXIMO = new Decimal('8.0');
 const TOLERANCIA_DO_ANUAL = new Decimal('0.02');
@@ -65,6 +65,7 @@ export function siglaDaUf(nomeDoEstado: string): string {
   return sigla;
 }
 
+// HSP (horas de sol pleno por dia) = irradiação em Wh/m² por dia ÷ 1000.
 function hspDe(valorEmWh: string, municipio: string): Decimal {
   if (!/^\d+(\.\d+)?$/.test(valorEmWh)) throw new Error(`Valor inválido no Atlas para ${municipio}: "${valorEmWh}"`);
   return new Decimal(valorEmWh).div(1000);

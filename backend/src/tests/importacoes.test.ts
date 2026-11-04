@@ -9,6 +9,7 @@ import {
 import { listarSituacaoDasImportacoes } from '../services/importacoesService.ts';
 import { gerarToken } from '../services/authService.ts';
 
+vi.mock('../repositories/usuariosRepository.ts', () => import('./apoio/usuariosDeTeste.ts'));
 vi.mock('../repositories/importacoesRepository.ts', () => ({
   existeImportacaoEmAndamento: vi.fn(),
   iniciarImportacao: vi.fn(),
@@ -48,12 +49,14 @@ describe('acesso às rotas de importação', () => {
   it.each([
     ['GET', '/api/admin/importacoes'],
     ['POST', '/api/admin/importacoes/aneel-tarifas'],
-  ])('%s %s sem login → 401, sem papel admin → 403', async (metodo, rota) => {
+  ])('%s %s sem login → 401; operador e gestor, sem papel admin → 403', async (metodo, rota) => {
     const chamar = () => (metodo === 'GET' ? request(criarApp()).get(rota) : request(criarApp()).post(rota));
 
     expect((await chamar()).status).toBe(401);
-    const comoUsuario = await chamar().set('Cookie', `sessao=${gerarToken({ id: 2, papel: 'usuario' })}`);
-    expect(comoUsuario.status).toBe(403);
+    const comoOperador = await chamar().set('Cookie', `sessao=${gerarToken({ id: 2, papel: 'operador' })}`);
+    expect(comoOperador.status).toBe(403);
+    const comoGestor = await chamar().set('Cookie', `sessao=${gerarToken({ id: 3, papel: 'gestor' })}`);
+    expect(comoGestor.status).toBe(403);
     expect(iniciarImportacao).not.toHaveBeenCalled();
   });
 });

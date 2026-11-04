@@ -1,4 +1,4 @@
-// Importação semanal do vínculo município → distribuidora (Plano 5, tarefa 2).
+// Importação semanal do vínculo município → distribuidora.
 import {
   buscarConjuntosDoAno, buscarConjuntosDosMunicipios, buscarRecursoDosLimites, buscarRecursoDosMunicipios,
   type ConjuntoDaDistribuidora, type ConjuntoDoMunicipio,
@@ -36,6 +36,7 @@ export function montarVinculos(conjuntosDoAno: ConjuntoDaDistribuidora[], conjun
   })));
 }
 
+// A versão da fonte evita baixar as bases quando nada mudou.
 export async function importarDistribuidorasDosMunicipios({ importacaoId, agora }: ContextoDaImportacao): Promise<ResultadoDaImportacao> {
   const ano = Number(hojeEmSaoPaulo(agora).slice(0, 4));
   const [limites, municipiosDaQualidade] = await Promise.all([buscarRecursoDosLimites(), buscarRecursoDosMunicipios()]);

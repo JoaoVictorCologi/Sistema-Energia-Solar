@@ -1,5 +1,6 @@
+import { Decimal } from 'decimal.js';
 import { describe, expect, it } from 'vitest';
-import { calcularIndicadores, payback, taxaInternaDeRetorno, valorPresenteLiquido } from '../../motor/financeiro.ts';
+import { calcularIndicadores, parcelaPrice, payback, taxaInternaDeRetorno, valorPresenteLiquido } from '../../motor/financeiro.ts';
 import { fracao, reais } from '../../motor/tipos.ts';
 
 const fluxo = (...valores: number[]) => valores.map((valor) => reais(valor));
@@ -36,5 +37,22 @@ describe('indicadores financeiros', () => {
     expect(resultado.tir).toBeNull();
     expect(resultado.paybackSimplesAnos).toBeNull();
     expect(resultado.paybackDescontadoAnos).toBeNull();
+  });
+});
+
+describe('parcela pela tabela Price', () => {
+  it('R$ 10.000 a 1,5% ao mês em 60 meses → R$ 253,93', () => {
+    expect(parcelaPrice(reais(10000), fracao('0.015'), 60).toDecimalPlaces(2).toString()).toBe('253.93');
+  });
+
+  it('sem juros, divide por igual', () => {
+    expect(parcelaPrice(reais(1200), fracao(0), 12).toString()).toBe('100');
+  });
+
+  it('a carência capitaliza os juros antes da primeira parcela', () => {
+    const semCarencia = parcelaPrice(reais(10000), fracao('0.015'), 60);
+    const comCarencia = parcelaPrice(reais(10000), fracao('0.015'), 60, 4);
+
+    expect(comCarencia.toDecimalPlaces(2).toString()).toBe(semCarencia.times(new Decimal('1.015').pow(4)).toDecimalPlaces(2).toString());
   });
 });

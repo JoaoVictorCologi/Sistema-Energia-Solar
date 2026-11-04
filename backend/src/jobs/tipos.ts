@@ -1,4 +1,4 @@
-// Contrato das importações agendadas, do núcleo e dos módulos (jobsDosModulos em modulos/index.ts).
+// Contrato das importações agendadas, do núcleo e dos módulos.
 
 export interface ContextoDaImportacao {
   // Linha desta execução na tabela importacao, para ligar os dados gravados a ela.

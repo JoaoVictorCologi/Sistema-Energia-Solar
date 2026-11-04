@@ -1,17 +1,24 @@
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import type { MesDoPrimeiroAno } from '../../services/api.ts';
+import type { MesDoPrimeiroAno, Simulacao } from '../../services/api.ts';
 import { formatarNumero, formatarReais, rotuloDoMes } from '../../utils/formatar.ts';
+import { aumentoPrevistoKwh } from './BlocosDoResultado.tsx';
 
-// Cores da marca validadas para daltonismo (azul × laranja, ΔE 30). O laranja tem contraste 2,75:1 com o fundo,
-// por isso a tabela mês a mês fica logo abaixo como leitura alternativa, e a legenda nomeia as duas séries.
+// Cores da marca validadas para daltonismo (azul × laranja, ΔE 30). O laranja tem contraste de 2,75:1 com o fundo;
+// por isso, a tabela mês a mês oferece uma leitura alternativa, e a legenda nomeia as duas séries.
 const COR_DO_CONSUMO = '#384C96';
 const COR_DA_GERACAO = '#D88739';
 
-export function GraficoConsumoGeracao({ meses }: { meses: MesDoPrimeiroAno[] }) {
+export function GraficoConsumoGeracao({ meses, pedido }: { meses: MesDoPrimeiroAno[]; pedido: Simulacao['pedido'] }) {
   const dados = meses.map((mes) => ({ rotulo: rotuloDoMes(mes.anoCivil, mes.mes), consumo: mes.consumoKwh, geracao: mes.geracaoKwh }));
+  const aumento = aumentoPrevistoKwh({ pedido, primeiroAno: meses });
 
   return (
     <figure>
+      {aumento > 0 && (
+        <p className="mb-4 text-sm font-semibold text-brand-ink">
+          O consumo inclui o aumento previsto: {formatarNumero(pedido.consumoMedioKwh)} kWh de hoje + {formatarNumero(aumento)} kWh = {formatarNumero(pedido.consumoMedioKwh + aumento)} kWh por mês.
+        </p>
+      )}
       <div className="h-80 w-full" role="img" aria-label="Gráfico de barras com o consumo e a geração prevista de cada mês do primeiro ano, em kWh. Os mesmos números estão na tabela mês a mês abaixo.">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={dados} barGap={2} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
@@ -24,10 +31,10 @@ export function GraficoConsumoGeracao({ meses }: { meses: MesDoPrimeiroAno[] }) 
               formatter={(valor, nome) => [`${formatarNumero(Number(valor), 1)} kWh`, nome]}
               contentStyle={{ borderRadius: 8, borderColor: '#D9DDE6', color: '#171F32' }}
             />
-            {/* O quadrado leva a cor da série; o texto fica na cor de texto, legível sobre o branco. */}
+            {/* O quadrado leva a cor da série; o rótulo usa a cor de texto, legível sobre o branco. */}
             <Legend verticalAlign="top" align="left" height={36} iconType="square" wrapperStyle={{ fontSize: 14 }}
               formatter={(nome) => <span style={{ color: '#171F32' }}>{nome}</span>} />
-            <Bar dataKey="consumo" name="Consumo" fill={COR_DO_CONSUMO} radius={[4, 4, 0, 0]} maxBarSize={18} />
+            <Bar dataKey="consumo" name={aumento > 0 ? 'Consumo com o aumento previsto' : 'Consumo'} fill={COR_DO_CONSUMO} radius={[4, 4, 0, 0]} maxBarSize={18} />
             <Bar dataKey="geracao" name="Geração prevista" fill={COR_DA_GERACAO} radius={[4, 4, 0, 0]} maxBarSize={18} />
           </BarChart>
         </ResponsiveContainer>
@@ -39,6 +46,7 @@ export function GraficoConsumoGeracao({ meses }: { meses: MesDoPrimeiroAno[] }) 
   );
 }
 
+// Mesmos números do gráfico, como leitura alternativa.
 export function TabelaMesAMes({ meses }: { meses: MesDoPrimeiroAno[] }) {
   return (
     <details className="mt-6 rounded-md border border-border bg-white">

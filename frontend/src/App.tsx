@@ -1,9 +1,11 @@
+// Declaração de todas as rotas da aplicação: site público, simulador e área restrita.
 import { createBrowserRouter, Navigate, Outlet, RouterProvider, ScrollRestoration, type RouteObject } from 'react-router';
 import { LayoutPublico } from './components/publico/LayoutPublico.tsx';
-import { RotaProtegida } from './components/RotaProtegida.tsx';
+import { RotaDoNivel, RotaProtegida } from './components/RotaProtegida.tsx';
 import { AuthProvider } from './contexts/AuthContext.tsx';
 import { rotasAdminDosModulos, rotasPublicasDosModulos, type RotaDeModulo } from './modulos/index.ts';
 import { Clientes } from './pages/admin/Clientes.tsx';
+import { Configuracoes } from './pages/admin/Configuracoes.tsx';
 import { DetalheDoCliente } from './pages/admin/DetalheDoCliente.tsx';
 import { Equipamentos } from './pages/admin/Equipamentos.tsx';
 import { Importacoes } from './pages/admin/Importacoes.tsx';
@@ -12,6 +14,8 @@ import { Login } from './pages/admin/Login.tsx';
 import { NaoEncontradaAdmin } from './pages/admin/NaoEncontradaAdmin.tsx';
 import { Painel } from './pages/admin/Painel.tsx';
 import { Propostas } from './pages/admin/Propostas.tsx';
+import { Simulacoes } from './pages/admin/Simulacoes.tsx';
+import { Usuarios } from './pages/admin/Usuarios.tsx';
 import { DetalheSolucao } from './pages/publico/DetalheSolucao.tsx';
 import { Metodologia } from './pages/publico/Metodologia.tsx';
 import { NaoEncontrada } from './pages/publico/NaoEncontrada.tsx';
@@ -20,11 +24,12 @@ import { Projetos } from './pages/publico/Projetos.tsx';
 import { Simulador } from './pages/publico/Simulador.tsx';
 import { Solucoes } from './pages/publico/Solucoes.tsx';
 
+// Converte a rota declarada por um módulo para o formato do React Router.
 function comoRota({ caminho, elemento }: RotaDeModulo): RouteObject {
   return { path: caminho, element: elemento };
 }
 
-// Enquanto nenhum módulo registra a página inicial, '/' leva ao simulador (AGENTS.md, regra 7 dos planos).
+// Sem um módulo que registre a página inicial, a raiz redireciona para o simulador.
 const inicioDoSite: RouteObject[] = rotasPublicasDosModulos.some((rota) => rota.caminho === '/')
   ? []
   : [{ path: '/', element: <Navigate to="/simulador" replace /> }];
@@ -32,7 +37,7 @@ const inicioDoSite: RouteObject[] = rotasPublicasDosModulos.some((rota) => rota.
 const rotasPublicas: RouteObject[] = [
   ...inicioDoSite,
   { path: '/simulador', element: <Simulador /> },
-  // Carregada só quando aberta: o Recharts do gráfico não pesa nas outras páginas.
+  // Rota sob demanda: o Recharts, usado nos gráficos, não entra no carregamento das demais páginas.
   {
     path: '/simulador/resultado',
     lazy: async () => ({ Component: (await import('./pages/publico/ResultadoSimulacao.tsx')).ResultadoSimulacao }),
@@ -46,18 +51,26 @@ const rotasPublicas: RouteObject[] = [
   { path: '*', element: <NaoEncontrada /> },
 ];
 
-// Telas do administrador do núcleo (Plano 1, tarefas 13 a 15).
+// Telas da equipe mantidas pelo núcleo. O acesso a cada grupo segue o nível exigido do papel.
 const telasDoNucleo: RouteObject[] = [
   { path: 'clientes', element: <Clientes /> },
   { path: 'clientes/:id', element: <DetalheDoCliente /> },
+  { path: 'simulacoes', element: <Simulacoes /> },
   { path: 'propostas', element: <Propostas /> },
-  // Com o gráfico (Recharts): carregada só quando aberta.
+  // Rota sob demanda, pelo mesmo motivo do resultado da simulação: contém gráfico.
   { path: 'propostas/:id', lazy: async () => ({ Component: (await import('./pages/admin/DetalheDaProposta.tsx')).DetalheDaProposta }) },
-  { path: 'equipamentos', element: <Equipamentos /> },
-  { path: 'importacoes', element: <Importacoes /> },
+  {
+    element: <RotaDoNivel nivel="gestao" />,
+    children: [
+      { path: 'equipamentos', element: <Equipamentos /> },
+      { path: 'configuracoes', element: <Configuracoes /> },
+      { path: 'usuarios', element: <Usuarios /> },
+    ],
+  },
+  { element: <RotaDoNivel nivel="admin" />, children: [{ path: 'importacoes', element: <Importacoes /> }] },
 ];
 
-// O AuthProvider fica só na área restrita: as páginas públicas não consultam /api/auth/me.
+// O AuthProvider envolve apenas a área restrita, para as páginas públicas não consultarem /api/auth/me.
 const rotasDoAdmin: RouteObject = {
   path: '/admin',
   element: <AuthProvider><Outlet /></AuthProvider>,
@@ -82,6 +95,7 @@ function CarregandoPagina() {
   return <p role="status" className="p-10 text-sm text-muted-foreground">Carregando…</p>;
 }
 
+// Raiz comum às duas áreas: restaura a posição de rolagem a cada navegação.
 function Raiz() {
   return (
     <>
@@ -92,7 +106,7 @@ function Raiz() {
 }
 
 const roteador = createBrowserRouter([
-  // HydrateFallback: o que aparece enquanto o código de uma rota sob demanda (resultado, proposta) chega na primeira abertura.
+  // HydrateFallback: exibido enquanto o código de uma rota sob demanda é carregado pela primeira vez.
   { element: <Raiz />, HydrateFallback: CarregandoPagina, children: [{ element: <LayoutPublico />, children: rotasPublicas }, rotasDoAdmin] },
 ]);
 

@@ -1,4 +1,4 @@
-// Seção 2 da especificação: potência, número de módulos e escolha do inversor.
+// Dimensionamento do sistema: potência, número de módulos e escolha do inversor.
 import { Decimal } from 'decimal.js';
 import { kwp, type Alerta, type Fracao, type Kwh, type Kwp } from './tipos.ts';
 
@@ -17,6 +17,10 @@ export interface EntradaDimensionamento {
   coberturaAlvo: Fracao;
   potenciaModuloW: Decimal;
   inversoresKw: Decimal[];
+  // Quantos módulos cabem na área informada pelo cliente.
+  numeroMaximoDeModulos?: number;
+  // Quantidade definida pelo operador na revisão do orçamento: ignora o cálculo e o limite de área.
+  numeroFixoDeModulos?: number;
 }
 
 export interface Dimensionamento {
@@ -59,7 +63,19 @@ export function dimensionar(entrada: EntradaDimensionamento): Dimensionamento {
   const consumoAnual = Decimal.sum(...entrada.consumoMensal);
   const horasDeSolNoAno = Decimal.sum(...entrada.hspMensal.map((hsp, indice) => hsp.times(DIAS_POR_MES[indice])));
   const kwpAlvo = kwp(entrada.coberturaAlvo.times(consumoAnual).div(entrada.performanceRatio.times(horasDeSolNoAno)));
-  const numeroModulos = kwpAlvo.times(1000).div(entrada.potenciaModuloW).ceil().toNumber();
+  const necessarios = kwpAlvo.times(1000).div(entrada.potenciaModuloW).ceil().toNumber();
+  const { numeroModulos, alertas } = limitarModulos(necessarios, entrada);
   const kwpInstalado = kwp(entrada.potenciaModuloW.times(numeroModulos).div(1000));
-  return { kwpAlvo, numeroModulos, kwpInstalado, ...escolherInversor(kwpInstalado, entrada.inversoresKw) };
+  const inversor = escolherInversor(kwpInstalado, entrada.inversoresKw);
+  return { kwpAlvo, numeroModulos, kwpInstalado, ...inversor, alertas: [...alertas, ...inversor.alertas] };
+}
+
+function limitarModulos(necessarios: number, entrada: EntradaDimensionamento): { numeroModulos: number; alertas: Alerta[] } {
+  if (entrada.numeroFixoDeModulos !== undefined) return { numeroModulos: entrada.numeroFixoDeModulos, alertas: [] };
+  const maximo = entrada.numeroMaximoDeModulos;
+  if (maximo === undefined || necessarios <= maximo) return { numeroModulos: necessarios, alertas: [] };
+  return {
+    numeroModulos: maximo,
+    alertas: [{ codigo: 'AREA_INSUFICIENTE', mensagem: `A área informada comporta ${maximo} módulo(s), menos que os ${necessarios} necessários: o sistema cobre só parte do consumo.` }],
+  };
 }

@@ -1,4 +1,4 @@
-// Seção 3 da especificação: geração mensal com degradação.
+// Geração mensal do sistema, com a degradação dos módulos.
 import type { Decimal } from 'decimal.js';
 import { kwh, type Fracao, type Kwh, type Kwp } from './tipos.ts';
 

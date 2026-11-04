@@ -1,11 +1,17 @@
+// Pedido de proposta: traduz o resultado da gravação nos erros da API.
 import { ErroHttp } from '../middlewares/erros.ts';
-import { registrarPedidoDeProposta } from '../repositories/clientesRepository.ts';
+import { registrarPedidoDeProposta, type EnderecoDaInstalacao } from '../repositories/clientesRepository.ts';
+import type { ContatoPreferido, MelhorHorario } from '../tipos/tabelas.ts';
 
 export interface PedidoDeProposta {
   codigoDaSimulacao: string;
   nome: string;
   email: string;
   telefone: string;
+  endereco?: EnderecoDaInstalacao;
+  contatoPreferido?: ContatoPreferido;
+  melhorHorario?: MelhorHorario;
+  autorizaUsoParaCalibracao?: boolean;
 }
 
 // Cada pedido cria um cliente novo: um pedido público nunca altera dados de um cliente já gravado.

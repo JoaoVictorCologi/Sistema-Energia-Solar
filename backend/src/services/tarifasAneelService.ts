@@ -1,4 +1,4 @@
-// Importação diária da tarifa (TE e TUSD) e do Fio B de todas as distribuidoras ligadas a municípios (Plano 5).
+// Importação diária da tarifa (TE e TUSD) e do Fio B de todas as distribuidoras ligadas a municípios.
 import { Decimal } from 'decimal.js';
 import { createHash } from 'node:crypto';
 import { buscarFioB, buscarRecursoDeTarifas, buscarRecursosDeComponentes, buscarTarifas, type FioBDaAneel, type TarifaDaAneel } from '../integracoes/aneel.ts';
@@ -108,8 +108,8 @@ function mudou(gravada: TarifaGravada, recebida: DadosDaTarifa): boolean {
     || (recebida.fioB !== null && (gravada.fioB === null || !gravada.fioB.eq(recebida.fioB)));
 }
 
-// Vigência nova vira linha nova; a antiga nunca é apagada. O Fio B só vem do recurso do ano corrente:
-// sem ele na resposta, o já gravado é mantido.
+// Vigência nova vira linha nova; a antiga nunca é apagada. Só os últimos anos de componentes são consultados:
+// sem o Fio B na resposta, o já gravado é mantido.
 export function separarNovasEAlteradas(gravadas: TarifaGravada[], recebidas: DadosDaTarifa[]): { novas: DadosDaTarifa[]; alteradas: TarifaGravada[] } {
   const gravadasPorChave = new Map(gravadas.map((tarifa) => [chaveDaTarifa(tarifa), tarifa]));
   const novas: DadosDaTarifa[] = [];
@@ -166,6 +166,7 @@ function prepararDistribuidora(cnpj: string, tarifas: TarifaDaAneel[], fioB: Fio
   }
 }
 
+// Compara a versão da fonte antes de baixar: sem mudança, as tarifas nem são consultadas.
 export async function importarTarifasDaAneel({ importacaoId, agora }: ContextoDaImportacao): Promise<ResultadoDaImportacao> {
   const fonte = await descreverFonte(agora);
   if (fonte.versaoDaFonte === await buscarVersaoDaUltimaImportacao(TIPO_TARIFAS_ANEEL)) return { status: 'sem_alteracao', linhasGravadas: 0, versaoDaFonte: fonte.versaoDaFonte };

@@ -1,5 +1,5 @@
-// Tarefa 11: reproduz contas de luz com o motor e compara com o valor cobrado (meta: erro abaixo de 5%).
-// Cada conta é um JSON em contas-reais/, sem nome, CPF, endereço ou número da instalação (ver docs/validacao.md).
+// Reproduz contas de luz com o motor e compara com o valor cobrado (meta: erro abaixo de 5%).
+// Cada conta é um arquivo JSON na pasta de casos, sem nome, CPF, endereço ou número da instalação.
 import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { Decimal } from 'decimal.js';
@@ -60,7 +60,7 @@ describe('contas de luz: calculado × cobrado', () => {
     expect(erro.lte(ERRO_MAXIMO)).toBe(true);
   });
 
-  // Pendente até a equipe trazer as contas (docs/validacao.md explica o que copiar de cada conta).
+  // Pendente até a conferência das contas reais, uma por teste.
   const reais = contas.filter(({ conta }) => conta.real).length;
   for (let numero = reais + 1; numero <= CONTAS_REAIS_ESPERADAS; numero++) {
     it.todo(`conta real ${numero} da distribuidora da demonstração`);

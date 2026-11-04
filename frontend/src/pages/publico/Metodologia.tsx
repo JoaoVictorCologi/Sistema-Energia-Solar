@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { Link } from 'react-router';
 import { useTituloDaPagina } from '../../hooks/useTituloDaPagina.ts';
 
-// Resumo de docs/arquitetura/motor-de-calculo.md para o visitante. Os valores de cada simulação aparecem em "Premissas" no resultado.
+// Explicação do cálculo para o visitante. Os valores de cada simulação aparecem em "Premissas", no resultado.
 
 const passos = [
   { titulo: 'Tarifa com impostos', texto: 'TE e TUSD da distribuidora, publicadas pela ANEEL, com ICMS, PIS e COFINS por dentro.' },
@@ -90,7 +90,9 @@ export function Metodologia() {
           <li>O investimento é estimado pela potência; o valor final vem na proposta, com os equipamentos e a avaliação do local.</li>
           <li>O Atlas é uma média de longo prazo, com o telhado voltado para o norte e inclinado na latitude: um ano específico, sombras e outra orientação mudam a geração.</li>
           <li>O aproveitamento do sistema e o consumo no mesmo horário da geração são premissas típicas, que variam com o telhado e os hábitos de cada casa.</li>
-          <li>Essas premissas foram calibradas com a região de Mococa-SP (CPFL Santa Cruz). Em outras distribuidoras o resultado é uma estimativa, e a tela avisa.</li>
+          <li>Essas premissas ainda são valores típicos, sem calibração com contas reais, e a tela avisa. Por isso o resultado é uma estimativa em qualquer região, e o valor final vem no orçamento dos especialistas.</li>
+          <li>Nas perguntas do simulador, você troca valores típicos pelos da sua casa: conta de luz, consumo de 12 meses, horários de consumo, sol e direção do telhado. Em todas há “não sei”, e o resultado mostra o que foi informado e o que foi estimado.</li>
+          <li>Com telhado menos favorável, o sistema cresce para manter a geração: são mais módulos, investimento maior e retorno mais longo. A geração só cai quando a área informada limita os módulos.</li>
           <li>O ICMS usa a alíquota geral de cada estado (e as faixas residenciais onde existem); PIS e COFINS usam uma média nacional.</li>
           <li>O cálculo usa a bandeira verde, sem adicional. A contribuição de iluminação pública fica fora, porque é igual com e sem solar.</li>
         </ul>

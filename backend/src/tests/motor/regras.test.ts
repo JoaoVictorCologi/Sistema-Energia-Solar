@@ -2,7 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-// AGENTS.md: motor/ só tem funções puras; banco, rede e relógio ficam com os services.
+// O motor só tem funções puras; banco, rede e relógio ficam com os services.
 const PASTA_DO_MOTOR = path.join(import.meta.dirname, '..', '..', 'motor');
 const PROIBIDOS = [/from 'knex'/, /from 'express'/, /\bfetch\(/, /Date\.now\(/, /new Date\(\)/, /\/database\//, /\/repositories\//];
 

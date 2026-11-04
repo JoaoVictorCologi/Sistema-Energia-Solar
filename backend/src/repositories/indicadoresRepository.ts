@@ -1,3 +1,4 @@
+// Indicadores do Banco Central usados como premissas financeiras.
 import { Decimal } from 'decimal.js';
 import { db } from '../database/conexao.ts';
 import type { IndicadorEconomico } from '../tipos/tabelas.ts';

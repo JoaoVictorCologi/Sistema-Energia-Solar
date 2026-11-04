@@ -1,3 +1,4 @@
+// Login, token de sessão e hash de senha.
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
@@ -25,7 +26,7 @@ const HASH_DESCARTAVEL = '$2b$12$sSkHxSnHY7R8oKFzzi5QYOU9.ryJWRuKpu3rn0/cZr8GuAQ
 
 const esquemaDoToken = z.object({
   sub: z.string().regex(/^\d+$/),
-  papel: z.enum(['admin', 'usuario']),
+  papel: z.enum(['admin', 'gestor', 'operador']),
 });
 
 function sessaoInvalida(): ErroHttp {
@@ -58,11 +59,17 @@ export function lerToken(token: string): UsuarioDaSessao {
   }
 }
 
-// O token pode ser de um usuário que já não existe: /me confere no banco.
+// O token pode ser de um usuário excluído ou com outro papel: vale sempre o que está no banco,
+// para a exclusão ter efeito na hora, mesmo com a sessão aberta.
 export async function buscarUsuarioLogado(id: number): Promise<UsuarioPublico> {
   const usuario = await buscarUsuarioPorId(id);
   if (!usuario) throw sessaoInvalida();
   return usuario;
+}
+
+export async function lerSessao(token: string): Promise<UsuarioDaSessao> {
+  const { id, papel } = await buscarUsuarioLogado(lerToken(token).id);
+  return { id, papel };
 }
 
 export async function criarAdministrador(dados: { nome: string; email: string; senha: string }): Promise<UsuarioPublico> {
@@ -70,6 +77,10 @@ export async function criarAdministrador(dados: { nome: string; email: string; s
   if (await existeUsuarioComEmail(email)) {
     throw new Error(`Já existe um usuário com o e-mail ${email}.`);
   }
-  const senha_hash = await bcrypt.hash(dados.senha, CUSTO_DO_BCRYPT);
+  const senha_hash = await gerarHashDaSenha(dados.senha);
   return inserirUsuario({ nome: dados.nome, email, senha_hash, papel: 'admin' });
+}
+
+export function gerarHashDaSenha(senha: string): Promise<string> {
+  return bcrypt.hash(senha, CUSTO_DO_BCRYPT);
 }

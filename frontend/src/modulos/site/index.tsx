@@ -3,8 +3,8 @@ import type { ModuloDoFrontend } from '../index.ts';
 import { Contato } from './pages/Contato.tsx';
 import { Inicio } from './pages/Inicio.tsx';
 
-// Plano 6 — Site institucional. Início e Contato vieram do site Don Energy e já funcionam sem backend
-// (o contato abre o WhatsApp). Quem somos, Perguntas frequentes e a caixa de mensagens entram com o plano.
+// Módulo do site institucional. Início e Contato funcionam sem backend (o contato abre o WhatsApp).
+// A caixa de mensagens ainda é provisória.
 export const moduloSite: ModuloDoFrontend = {
   rotasPublicas: [
     { caminho: '/', elemento: <Inicio /> },
@@ -18,7 +18,7 @@ export const moduloSite: ModuloDoFrontend = {
     caminho: '/admin/mensagens',
     elemento: (
       <EmConstrucao
-        titulo="Mensagens" origem="Plano 6 · Site institucional"
+        titulo="Mensagens" origem="Site institucional"
         descricao="Caixa das mensagens enviadas pelo formulário de contato do site, com filtro por status, marcação de respondida e exclusão a pedido do titular (LGPD)."
       />
     ),

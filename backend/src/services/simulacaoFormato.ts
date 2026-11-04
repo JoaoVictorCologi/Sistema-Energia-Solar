@@ -5,6 +5,7 @@ import type { EntradaSimulacao, ResultadoSimulacao } from '../motor/simular.ts';
 import { tarifaComImpostos } from '../motor/tarifa.ts';
 import type { TarifaGravada } from '../repositories/tarifasRepository.ts';
 import type { LocalDoCep } from './cepService.ts';
+import type { OrigemDasPremissas, ParcelaEstimada } from './refinamento.ts';
 import type { DadosDoPedido } from './simulacaoService.ts';
 
 export interface ContextoDaSimulacao {
@@ -13,6 +14,9 @@ export interface ContextoDaSimulacao {
   tarifa: TarifaGravada;
   distribuidora: string;
   versaoParametros: string;
+  origem: OrigemDasPremissas;
+  fatorDoTelhado: Decimal;
+  parcelaEstimada: ParcelaEstimada | null;
 }
 
 const dinheiro = (valor: Decimal) => valor.toDecimalPlaces(2).toNumber();
@@ -38,6 +42,9 @@ function formatarPremissas(entrada: EntradaSimulacao, contexto: ContextoDaSimula
     inicio: entrada.inicio,
     regime: entrada.regime,
     versaoParametros: contexto.versaoParametros,
+    // De onde veio cada premissa: "informado" pelo cliente, "estimado" (valor típico) ou "revisado" pelo operador.
+    origem: contexto.origem,
+    telhado: { fator: taxa(contexto.fatorDoTelhado) },
   };
 }
 
@@ -53,6 +60,9 @@ export function formatarSimulacao(entrada: EntradaSimulacao, resultado: Resultad
       inversorKw: dimensionamento.inversorKw?.toNumber() ?? null,
     },
     investimentoEstimado: { valor: dinheiro(entrada.investimento), aviso: 'Valor estimado; o valor final vem na proposta.' },
+    // Geração do primeiro ano ÷ consumo do ano: abaixo de 1 com a área limitando o sistema.
+    coberturaAlcancada: taxa(resultado.resumoAnual[0].geracao.div(Decimal.sum(...entrada.consumoMensal))),
+    parcelaEstimada: contexto.parcelaEstimada,
     indicadores: {
       economiaPrimeiroAno: dinheiro(indicadores.economiaPrimeiroAno),
       economiaMensalMedia: dinheiro(indicadores.economiaPrimeiroAno.div(12)),

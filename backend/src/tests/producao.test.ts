@@ -6,7 +6,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { criarApp } from '../app.ts';
 import { lerEnv } from '../config/env.ts';
 
-// Um build do React de mentira: index.html e um arquivo com hash em assets/.
+// Build simulado do site: index.html e um arquivo com hash em assets/.
 let pasta: string;
 beforeAll(() => {
   pasta = mkdtempSync(path.join(tmpdir(), 'frontend-'));

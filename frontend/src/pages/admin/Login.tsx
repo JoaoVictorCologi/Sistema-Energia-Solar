@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext.tsx';
 import { empresa } from '../../dados/empresa.ts';
 import { useTituloDaPagina } from '../../hooks/useTituloDaPagina.ts';
 import { ErroDaApi } from '../../services/api.ts';
+import { ehDaEquipe } from '../../utils/papeis.ts';
 
 const classeDoCampo =
   'mt-2 block min-h-12 w-full rounded-sm border border-border bg-white px-3 text-base text-brand-ink aria-[invalid=true]:border-red-700';
@@ -18,12 +19,12 @@ export function Login() {
   const [enviando, setEnviando] = useState(false);
   useTituloDaPagina('Entrar — Solar Gestão');
 
-  // Depois do login (ou se a sessão já existe), o próprio estado do AuthContext faz o redirecionamento.
-  if (!carregando && usuario?.papel === 'admin') return <Navigate to={destino} replace />;
+  // Depois do login, ou com a sessão já aberta, o estado do AuthContext faz o redirecionamento.
+  if (!carregando && usuario && ehDaEquipe(usuario.papel)) return <Navigate to={destino} replace />;
 
   async function enviar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault();
-    // Campo vazio nem vai ao servidor: não gasta uma das 5 tentativas de login.
+    // Campo vazio não vai ao servidor e não consome uma das tentativas de login.
     const camposVazios: Record<string, string> = {};
     if (!email.trim()) camposVazios.email = 'Informe o e-mail.';
     if (!senha) camposVazios.senha = 'Informe a senha.';
@@ -52,7 +53,7 @@ export function Login() {
       </Link>
 
       <form onSubmit={enviar} noValidate className="mt-8 w-full max-w-sm rounded-md bg-white p-6 shadow-lg sm:p-8">
-        <h1 className="font-heading text-2xl font-medium tracking-tight text-brand-blue">Área do administrador</h1>
+        <h1 className="font-heading text-2xl font-medium tracking-tight text-brand-blue">Área restrita</h1>
         <p className="mt-2 text-sm text-muted-foreground">Entre com o e-mail e a senha cadastrados.</p>
 
         {erro && !erroDoEmail && !erroDaSenha && (

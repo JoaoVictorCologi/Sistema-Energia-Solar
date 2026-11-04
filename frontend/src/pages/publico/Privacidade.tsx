@@ -2,8 +2,8 @@ import type { ReactNode } from 'react';
 import { empresa } from '../../dados/empresa.ts';
 import { useTituloDaPagina } from '../../hooks/useTituloDaPagina.ts';
 
-// Atualizar a data só quando o texto mudar de fato. O Plano 6 (contato pela API) muda as seções 2 a 4.
-const ATUALIZADA_EM = '3 de novembro de 2026';
+// Alterar a data somente quando o texto mudar de fato.
+const ATUALIZADA_EM = '4 de novembro de 2026';
 
 const classeDoLinkExterno = 'break-all underline underline-offset-4';
 
@@ -32,15 +32,22 @@ export function Privacidade() {
         <Secao titulo="2. Quais dados você informa">
           <p>
             <strong className="font-semibold text-brand-ink">No simulador:</strong> CEP, distribuidora de energia, tipo de imóvel, tipo de ligação e consumo médio mensal.
+            Se você responder às perguntas opcionais sobre a casa, também: valor e consumo da conta de luz, iluminação pública, consumo de 12 meses, horários de consumo,
+            dados do telhado (sol direto, direção, inclinação, tipo e área), data do pedido de ligação de energia solar já existente, aumento previsto de consumo e forma de pagamento preferida.
             A simulação é gravada com esses dados e o resultado calculado, sem nome nem contato.
           </p>
           <p>
             <strong className="font-semibold text-brand-ink">No pedido de proposta</strong> (na tela do resultado): nome, e-mail e telefone,
-            com o registro da data em que você aceitou o uso dos dados. O pedido fica ligado à sua simulação e ao CEP informado nela.
+            com o registro da data em que você aceitou o uso dos dados e, se quiser informar, o endereço da instalação, o meio e o melhor horário de contato.
+            O pedido fica ligado à sua simulação e ao CEP informado nela. O endereço fica só no seu cadastro, nunca na simulação.
           </p>
           <p>
             <strong className="font-semibold text-brand-ink">No formulário de contato:</strong> nome, telefone, cidade, perfil solar e, se quiser,
             o consumo mensal ou o valor da conta de luz.
+          </p>
+          <p>
+            <strong className="font-semibold text-brand-ink">Autorização para melhorar o simulador:</strong> é separada do pedido de proposta e opcional. Só com ela os dados da
+            simulação, sem identificação, podem ser usados para ajustar as premissas do cálculo. Sem ela, o pedido segue normalmente.
           </p>
           <p>Não usamos cookies de rastreamento, pixels de anúncio nem ferramentas de análise de comportamento.</p>
         </Secao>

@@ -1,6 +1,7 @@
 import { Link } from 'react-router';
 import { useTituloDaPagina } from '../../hooks/useTituloDaPagina.ts';
 
+// Página 404 do site.
 export function NaoEncontrada() {
   useTituloDaPagina('Página não encontrada — Don Energy');
 

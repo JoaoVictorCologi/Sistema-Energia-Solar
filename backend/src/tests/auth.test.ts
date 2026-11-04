@@ -171,7 +171,8 @@ describe('autenticar + exigirAdmin', () => {
   });
 
   it('usuário sem papel admin responde 403', async () => {
-    const token = gerarToken({ id: 2, papel: 'usuario' });
+    vi.mocked(buscarUsuarioPorId).mockResolvedValue({ ...ADMIN, id: 2, papel: 'operador' });
+    const token = gerarToken({ id: 2, papel: 'operador' });
 
     const resposta = await request(appRestrito).get('/restrita').set('Cookie', `sessao=${token}`);
 
@@ -185,5 +186,30 @@ describe('autenticar + exigirAdmin', () => {
     const resposta = await request(appRestrito).get('/restrita').set('Cookie', `sessao=${token}`);
 
     expect(resposta.status).toBe(200);
+  });
+
+  it('vale o papel do banco, não o do token: quem perdeu o acesso sai na hora', async () => {
+    vi.mocked(buscarUsuarioPorId).mockResolvedValue({ ...ADMIN, papel: 'operador' });
+    const tokenAntigo = gerarToken({ id: 1, papel: 'admin' });
+
+    const resposta = await request(appRestrito).get('/restrita').set('Cookie', `sessao=${tokenAntigo}`);
+
+    expect(resposta.status).toBe(403);
+  });
+
+  it('usuário excluído: o token ainda válido responde 401', async () => {
+    vi.mocked(buscarUsuarioPorId).mockResolvedValue(undefined);
+    const token = gerarToken({ id: 1, papel: 'admin' });
+
+    const resposta = await request(appRestrito).get('/restrita').set('Cookie', `sessao=${token}`);
+
+    expect(resposta.status).toBe(401);
+    expect(resposta.body.error.code).toBe('SESSAO_INVALIDA');
+  });
+
+  it('token com papel desconhecido responde 401', async () => {
+    const token = jwt.sign({ papel: 'usuario' }, SEGREDO, { subject: '1', expiresIn: 60 });
+
+    expect((await request(appRestrito).get('/restrita').set('Cookie', `sessao=${token}`)).status).toBe(401);
   });
 });

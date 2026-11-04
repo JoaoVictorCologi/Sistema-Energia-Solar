@@ -1,4 +1,4 @@
-// Cria dados fictícios para a apresentação (catálogo, clientes, simulações e propostas).
+// Cria dados fictícios de demonstração (catálogo, clientes, simulações e propostas).
 // Pode rodar de novo: apaga só os dados de demonstração anteriores. Uso: npm run dados-demo [-- --confirmar]
 import { ErroDeConfiguracao, obterEnv } from '../src/config/env.ts';
 import { conferirAmbiente } from '../src/services/demonstracaoAmbiente.ts';

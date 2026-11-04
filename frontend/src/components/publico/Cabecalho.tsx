@@ -5,6 +5,7 @@ import { empresa, linkDoWhatsApp } from '../../dados/empresa.ts';
 import { menuPublicoDosModulos, ordenarMenu, type ItemDeMenu } from '../../modulos/index.ts';
 import { MenuMovel } from './MenuMovel.tsx';
 
+// Itens fixos do menu; `ordem` os intercala com os itens dos módulos.
 const menuDoNucleo: ItemDeMenu[] = [
   { rotulo: 'Soluções', caminho: '/solucoes', ordem: 20 },
   { rotulo: 'Projetos', caminho: '/projetos', ordem: 30 },
@@ -23,7 +24,7 @@ function observarRolagem(aoMudar: () => void) {
 
 const rolouAlem16px = () => window.scrollY > 16;
 
-// Transparente só sobre a foto da página inicial e com a página no topo; nas demais, sólido desde o início.
+// Transparente apenas sobre a foto da página inicial, com a página no topo; nas demais, sólido desde o início.
 export function Cabecalho() {
   const { pathname } = useLocation();
   const naInicial = pathname === '/';
@@ -51,7 +52,7 @@ export function Cabecalho() {
             ))}
           </nav>
           <div className="hidden items-center gap-3 md:flex">
-            {/* Entre 768 e 1024 px só o cadeado, para o cabeçalho caber numa linha. */}
+            {/* Entre 768 e 1024 px, apenas o cadeado, para o cabeçalho caber em uma linha. */}
             <Link
               to="/admin" aria-label="Área restrita"
               className="inline-flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-md border border-white/40 px-3 text-sm font-semibold hover:bg-white/10"
@@ -69,7 +70,7 @@ export function Cabecalho() {
           <MenuMovel itens={itensDoMenuPublico} />
         </div>
       </header>
-      {/* Nas páginas internas, reserva a altura do cabeçalho fixo para o conteúdo não ficar por baixo. */}
+      {/* Nas páginas internas, reserva a altura do cabeçalho fixo para o conteúdo não ficar sob ele. */}
       {!naInicial && <div aria-hidden="true" className="h-[var(--header-height)] shrink-0" />}
     </>
   );

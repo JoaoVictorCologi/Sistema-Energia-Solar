@@ -1,7 +1,7 @@
 import type { Knex } from 'knex';
 
 // Simulação pública: guarda a entrada e o resultado (JSONB) e as referências usadas,
-// para reproduzir o cálculo e ligar o pedido de proposta (tarefa 12) sem recalcular.
+// para reproduzir o cálculo e atender o pedido de proposta sem recalcular.
 export async function up(knex: Knex): Promise<void> {
   await knex.schema.createTable('simulacao', (tabela) => {
     tabela.increments('id');

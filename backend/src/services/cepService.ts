@@ -1,4 +1,4 @@
-// CEP → município → distribuidoras que o cliente pode escolher (Plano 5: o Brasil todo).
+// CEP → município → distribuidoras que o cliente pode escolher, em qualquer lugar do Brasil.
 import { buscarEnderecoDoCep } from '../integracoes/viaCep.ts';
 import { ErroDeIntegracao } from '../integracoes/http.ts';
 import { ErroHttp } from '../middlewares/erros.ts';

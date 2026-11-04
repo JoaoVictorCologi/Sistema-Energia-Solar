@@ -1,4 +1,4 @@
-// Seções 4 a 6 da especificação: autoconsumo, compensação (GD I e GD II), créditos e faturas do mês.
+// Faturamento do mês: autoconsumo, compensação (GD I e GD II), créditos e faturas.
 import { Decimal } from 'decimal.js';
 import { kwh, reais, type Fracao, type Kwh, type Reais, type ReaisPorKwh } from './tipos.ts';
 

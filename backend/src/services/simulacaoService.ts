@@ -2,11 +2,13 @@
 // arquivos de parâmetros; nunca chama a ANEEL.
 import { Decimal } from 'decimal.js';
 import { dimensionar } from '../motor/dimensionamento.ts';
+import { tarifaComImpostos, type Tributos } from '../motor/tarifa.ts';
 import { simular, type EntradaSimulacao, type PremissasDaSimulacao } from '../motor/simular.ts';
 import { fracao, kwh, reais, reaisPorKwh, type Alerta } from '../motor/tipos.ts';
 import { ErroHttp } from '../middlewares/erros.ts';
 import { parametros } from '../parametros/parametros.ts';
 import { tributosDaUf } from '../parametros/tributos.ts';
+import { listarFormasDePagamento, type ConfiguracaoVigente } from '../repositories/configuracoesRepository.ts';
 import { buscarMunicipio } from '../repositories/municipiosRepository.ts';
 import { buscarUltimoIndicador } from '../repositories/indicadoresRepository.ts';
 import { buscarIrradiacaoDoMunicipio, type IrradiacaoGravada } from '../repositories/irradiacaoRepository.ts';
@@ -14,15 +16,20 @@ import { inserirSimulacao } from '../repositories/simulacoesRepository.ts';
 import { buscarTarifaVigente, buscarUltimaTarifaComFioB, type FiltroDeTarifa, type TarifaGravada } from '../repositories/tarifasRepository.ts';
 import { hojeEmSaoPaulo } from '../utils/datas.ts';
 import { consultarCep, type LocalDoCep } from './cepService.ts';
+import { obterConfiguracaoVigente } from './configuracoesService.ts';
+import {
+  alertasDasRespostas, aliquotaDaConta, coberturaDoPedido, consumoDoPedido, estimarParcela, fatorDoTelhado, modulosNaArea, origemDasPremissas, regimeDoPedido,
+  simultaneidadeDoPedido, type OrigemDasPremissas, type RespostasDoCliente, type RevisaoDePremissas, type Subgrupo,
+} from './refinamento.ts';
 import { formatarSimulacao, type SimulacaoFormatada } from './simulacaoFormato.ts';
 
 export type TipoLigacao = 'monofasico' | 'bifasico' | 'trifasico';
-export type Subgrupo = 'B1' | 'B2' | 'B3';
 
-export interface PedidoDeSimulacao {
+export interface PedidoDeSimulacao extends RespostasDoCliente {
   cep: string;
   tipoLigacao: TipoLigacao;
   subgrupo: Subgrupo;
+  // Consumo de hoje: a média informada ou a do histórico de 12 meses.
   consumoMedioKwh: Decimal;
   // CNPJ escolhido pelo cliente; obrigatório quando o município tem mais de uma distribuidora.
   distribuidora?: string;
@@ -47,7 +54,7 @@ const SERIE_IPCA_12_MESES = 13522;
 const SERIE_SELIC_META = 432;
 
 export interface Referencias {
-  // UF do município: define o ICMS (tributos-por-uf.json).
+  // UF do município: define o ICMS.
   uf: string;
   distribuidora: DistribuidoraEscolhida;
   tarifa: TarifaGravada & { fioB: Decimal };
@@ -56,6 +63,7 @@ export interface Referencias {
   irradiacao: IrradiacaoGravada;
   reajusteAnual: Decimal;
   taxaDesconto: Decimal;
+  configuracao: ConfiguracaoVigente;
 }
 
 function dadosIndisponiveis(): ErroHttp {
@@ -71,24 +79,26 @@ async function completarFioB(tarifa: TarifaGravada, filtro: FiltroDeTarifa): Pro
   return { fioB: anterior.fioB.times(tarifa.tusd).div(anterior.tusd).toDecimalPlaces(6), fioBDaVigencia: anterior.inicioVigencia };
 }
 
+// Faltando qualquer referência, a simulação não roda: um resultado parcial enganaria o cliente.
 export async function buscarReferencias(codigoIbge: number, subgrupo: Subgrupo, hoje: string, distribuidora: DistribuidoraEscolhida): Promise<Referencias> {
   const filtro = { cnpj: distribuidora.cnpj, subgrupo, ...CLASSE_DO_SUBGRUPO[subgrupo], data: hoje };
-  const [municipio, tarifa, irradiacao, ipca, selic] = await Promise.all([
+  const [municipio, tarifa, irradiacao, ipca, selic, configuracao] = await Promise.all([
     buscarMunicipio(codigoIbge),
     buscarTarifaVigente(filtro),
     buscarIrradiacaoDoMunicipio(codigoIbge),
     buscarUltimoIndicador(SERIE_IPCA_12_MESES),
     buscarUltimoIndicador(SERIE_SELIC_META),
+    obterConfiguracaoVigente(),
   ]);
   const fioB = tarifa ? await completarFioB(tarifa, filtro) : null;
   if (!municipio || !tarifa || !fioB || !irradiacao || !ipca || !selic) throw dadosIndisponiveis();
   return {
     uf: municipio.uf, distribuidora, tarifa: { ...tarifa, fioB: fioB.fioB }, fioBDaVigencia: fioB.fioBDaVigencia,
-    irradiacao, reajusteAnual: ipca.valor.div(100), taxaDesconto: selic.valor.div(100),
+    irradiacao, reajusteAnual: ipca.valor.div(100), taxaDesconto: selic.valor.div(100), configuracao,
   };
 }
 
-// Uma distribuidora: automática. Mais de uma: o cliente escolhe entre as do município (o frontend não decide sozinho).
+// Uma distribuidora: escolha automática. Mais de uma: o cliente escolhe, e o backend confere se ela atende o município.
 export function escolherDistribuidora(local: LocalDoCep, cnpjPedido: string | undefined): DistribuidoraEscolhida {
   if (!local.atendido) throw new ErroHttp(422, 'REGIAO_NAO_ATENDIDA', 'Região ainda não atendida: não há distribuidora com tarifa para este município.');
   if (cnpjPedido === undefined) {
@@ -106,7 +116,7 @@ function mesSeguinte(hoje: string): { ano: number; mes: number } {
   return mes === 12 ? { ano: ano + 1, mes: 1 } : { ano, mes: mes + 1 };
 }
 
-// O que muda entre a simulação pública (referências do parametros.json) e a proposta (catálogo com preço).
+// O que muda entre a simulação pública (referências) e o orçamento (catálogo com preço).
 export interface EquipamentosDaEntrada {
   modulo: { potenciaW: Decimal; degradacaoAnual: Decimal };
   inversoresKw: Decimal[];
@@ -114,11 +124,27 @@ export interface EquipamentosDaEntrada {
   custoDaTrocaDoInversor: Decimal;
 }
 
-function montarPremissas(pedido: DadosDoPedido, referencias: Referencias, custoDaTrocaDoInversor: Decimal): PremissasDaSimulacao {
+// O que define o tamanho do sistema, igual na estimativa do preço e no motor. A revisão do operador tem prioridade.
+function premissasDoSistema(pedido: DadosDoPedido, referencias: Referencias, revisao: RevisaoDePremissas) {
+  const fator = fatorDoTelhado({ ...pedido.telhado, ...revisao.telhado });
   return {
-    performanceRatio: fracao(parametros.performanceRatio),
-    simultaneidade: fracao(parametros.simultaneidade[pedido.subgrupo]),
-    coberturaAlvo: fracao(parametros.coberturaAlvo),
+    consumoMensal: consumoDoPedido(pedido.consumoMedioKwh, pedido).map(kwh),
+    hspMensal: referencias.irradiacao.hspMensal.map((hsp) => hsp.times(fator)),
+    performanceRatio: fracao(revisao.performanceRatio ?? parametros.performanceRatio),
+    coberturaAlvo: fracao(coberturaDoPedido(parametros.coberturaAlvo, pedido.consumoMedioKwh, pedido)),
+    numeroMaximoDeModulos: modulosNaArea(pedido.telhado?.areaM2),
+    numeroFixoDeModulos: revisao.quantidadeDeModulos,
+  };
+}
+
+function montarPremissas(pedido: DadosDoPedido, referencias: Referencias, custoDaTrocaDoInversor: Decimal, revisao: RevisaoDePremissas): PremissasDaSimulacao {
+  const sistema = premissasDoSistema(pedido, referencias, revisao);
+  return {
+    performanceRatio: sistema.performanceRatio,
+    simultaneidade: fracao(revisao.simultaneidade ?? simultaneidadeDoPedido(pedido.subgrupo, pedido.perfilDeConsumo)),
+    coberturaAlvo: sistema.coberturaAlvo,
+    numeroMaximoDeModulos: sistema.numeroMaximoDeModulos,
+    numeroFixoDeModulos: sistema.numeroFixoDeModulos,
     consumoMinimo: kwh(parametros.consumoMinimoKwh[pedido.tipoLigacao]),
     percentualFioBPorAno: Object.fromEntries(Object.entries(parametros.fioBPercentualPorAno).map(([ano, percentual]) => [Number(ano), fracao(percentual)])),
     validadeDosCreditosMeses: parametros.validadeDosCreditosMeses,
@@ -130,10 +156,15 @@ function montarPremissas(pedido: DadosDoPedido, referencias: Referencias, custoD
   };
 }
 
+// Mesmo dimensionamento que o motor fará: o preço precisa do número de módulos antes de simular.
+export function dimensionarPedido(pedido: DadosDoPedido, referencias: Referencias, potenciaModuloW: Decimal, inversoresKw: Decimal[], revisao: RevisaoDePremissas = {}) {
+  return dimensionar({ ...premissasDoSistema(pedido, referencias, revisao), potenciaModuloW, inversoresKw });
+}
+
 // Estimativa da simulação pública (kWp × custo de referência); a tela avisa "valor final na proposta".
 function equipamentosDeReferencia(pedido: DadosDoPedido, referencias: Referencias): EquipamentosDaEntrada {
   const { kwpInstalado } = dimensionarPedido(pedido, referencias, parametros.moduloReferencia.potenciaW, []);
-  const investimento = kwpInstalado.times(parametros.custoReferenciaPorKwp);
+  const investimento = kwpInstalado.times(referencias.configuracao.custoReferenciaPorKwp);
   return {
     modulo: { potenciaW: parametros.moduloReferencia.potenciaW, degradacaoAnual: parametros.degradacaoAnualPadrao },
     inversoresKw: parametros.inversoresReferenciaKw,
@@ -142,52 +173,63 @@ function equipamentosDeReferencia(pedido: DadosDoPedido, referencias: Referencia
   };
 }
 
-// Mesmo dimensionamento que o motor fará: a proposta precisa do número de módulos para calcular o preço.
-export function dimensionarPedido(pedido: DadosDoPedido, referencias: Referencias, potenciaModuloW: Decimal, inversoresKw: Decimal[]) {
-  return dimensionar({
-    consumoMensal: Array.from({ length: 12 }, () => kwh(pedido.consumoMedioKwh)), hspMensal: referencias.irradiacao.hspMensal,
-    performanceRatio: fracao(parametros.performanceRatio), coberturaAlvo: fracao(parametros.coberturaAlvo), potenciaModuloW, inversoresKw,
-  });
-}
-
-function comoTributos({ icms, pis, cofins, icmsSobreFioB }: ReturnType<typeof tributosDaUf>) {
+function tributosDoEstado(pedido: DadosDoPedido, uf: string) {
+  const { icms, pis, cofins, icmsSobreFioB } = tributosDaUf(uf, pedido.consumoMedioKwh);
   return { icms: fracao(icms), pis: fracao(pis), cofins: fracao(cofins), icmsSobreFioB };
 }
 
+// A conta do cliente já traz todos os tributos: a alíquota implícita substitui o ICMS (PIS e COFINS ficam na média).
+export function tributosDoPedido(pedido: DadosDoPedido, referencias: Referencias): { tributos: Tributos; contaUsada: boolean; contaIgnorada: boolean } {
+  const tributos = tributosDoEstado(pedido, referencias.uf);
+  const { te, tusd } = referencias.tarifa;
+  const semImpostos = { te: reaisPorKwh(te), tusd: reaisPorKwh(tusd), fioB: reaisPorKwh(0), adicionalBandeira: reaisPorKwh(0) };
+  const aliquota = aliquotaDaConta(pedido.conta, te.plus(tusd), tarifaComImpostos(semImpostos, tributos));
+  if (!aliquota) return { tributos, contaUsada: false, contaIgnorada: pedido.conta !== undefined };
+  return { tributos: { ...tributos, icms: fracao(aliquota.minus(tributos.pis).minus(tributos.cofins)) }, contaUsada: true, contaIgnorada: false };
+}
+
+// Entrada completa do motor. Sem equipamentos informados, usa os de referência da simulação pública.
 export function montarEntrada(
   pedido: DadosDoPedido,
   referencias: Referencias,
   hoje: string,
   equipamentos: EquipamentosDaEntrada = equipamentosDeReferencia(pedido, referencias),
+  revisao: RevisaoDePremissas = {},
 ): EntradaSimulacao {
   const { tarifa } = referencias;
+  const sistema = premissasDoSistema(pedido, referencias, revisao);
   return {
-    consumoMensal: Array.from({ length: 12 }, () => kwh(pedido.consumoMedioKwh)),
-    hspMensal: referencias.irradiacao.hspMensal,
+    consumoMensal: sistema.consumoMensal,
+    hspMensal: sistema.hspMensal,
     tarifa: { te: reaisPorKwh(tarifa.te), tusd: reaisPorKwh(tarifa.tusd), fioB: reaisPorKwh(tarifa.fioB), adicionalBandeira: reaisPorKwh(0) },
-    tributos: comoTributos(tributosDaUf(referencias.uf, pedido.consumoMedioKwh)),
+    tributos: tributosDoPedido(pedido, referencias).tributos,
     modulo: { potenciaW: equipamentos.modulo.potenciaW, degradacaoAnual: fracao(equipamentos.modulo.degradacaoAnual) },
     inversoresKw: equipamentos.inversoresKw,
     investimento: reais(equipamentos.investimento),
     inicio: mesSeguinte(hoje),
-    regime: 'GD_II',
-    premissas: montarPremissas(pedido, referencias, equipamentos.custoDaTrocaDoInversor),
+    regime: regimeDoPedido(pedido.solarExistente),
+    premissas: montarPremissas(pedido, referencias, equipamentos.custoDaTrocaDoInversor, revisao),
   };
 }
 
 // PR e simultaneidade não vêm de API. Sem contas reais conferidas, são valores típicos em todo lugar;
-// depois da calibração, só a distribuidora das contas deixa de ter o aviso.
-function alertaDeCalibracao(distribuidora: DistribuidoraEscolhida): Alerta[] {
+// depois da calibração, só a distribuidora das contas deixa de ter o aviso. O que o cliente informou sai da frase.
+function alertaDeCalibracao(distribuidora: DistribuidoraEscolhida, origem: OrigemDasPremissas): Alerta[] {
   const { calibracao } = parametros;
+  const plural = origem.simultaneidade === 'estimado';
+  const assunto = plural ? 'Aproveitamento do sistema e consumo simultâneo' : 'Aproveitamento do sistema';
+  const valorTipico = plural ? 'são valores típicos' : 'é um valor típico';
   if (!calibracao.calibrada) {
-    return [{ codigo: 'PREMISSAS_NAO_CALIBRADAS', mensagem: 'Aproveitamento do sistema e consumo simultâneo são valores típicos, ainda não calibrados com contas reais: o resultado é uma estimativa.' }];
+    const semCalibracao = plural ? 'ainda não calibrados' : 'ainda não calibrado';
+    return [{ codigo: 'PREMISSAS_NAO_CALIBRADAS', mensagem: `${assunto} ${valorTipico}, ${semCalibracao} com contas reais: o resultado é uma estimativa.` }];
   }
   if (distribuidora.cnpj === calibracao.cnpj) return [];
-  return [{ codigo: 'ESTIMATIVA_FORA_DA_REGIAO_CALIBRADA', mensagem: `Aproveitamento do sistema e consumo simultâneo foram calibrados com contas da ${calibracao.sigla}: para ${distribuidora.sigla}, são valores típicos e o resultado é uma estimativa.` }];
+  const calibrado = plural ? 'foram calibrados' : 'foi calibrado';
+  return [{ codigo: 'ESTIMATIVA_FORA_DA_REGIAO_CALIBRADA', mensagem: `${assunto} ${calibrado} com contas da ${calibracao.sigla}: para ${distribuidora.sigla}, ${valorTipico} e o resultado é uma estimativa.` }];
 }
 
 // Avisos sobre os dados usados: tarifa vencida, Fio B de vigência anterior e premissas sem calibração.
-export function alertasDasReferencias(referencias: Referencias, hoje: string): Alerta[] {
+export function alertasDasReferencias(referencias: Referencias, hoje: string, origem: OrigemDasPremissas): Alerta[] {
   const alertas: Alerta[] = [];
   const { tarifa, fioBDaVigencia, distribuidora } = referencias;
   if (tarifa.fimVigencia && tarifa.fimVigencia < hoje) {
@@ -196,7 +238,7 @@ export function alertasDasReferencias(referencias: Referencias, hoje: string): A
   if (fioBDaVigencia) {
     alertas.push({ codigo: 'FIO_B_DA_VIGENCIA_ANTERIOR', mensagem: `A ANEEL ainda não publicou o Fio B desta tarifa: usamos o de ${fioBDaVigencia}, corrigido pela variação da TUSD.` });
   }
-  alertas.push(...alertaDeCalibracao(distribuidora));
+  alertas.push(...alertaDeCalibracao(distribuidora, origem));
   return alertas;
 }
 
@@ -207,9 +249,14 @@ export async function simularEconomia(pedido: PedidoDeSimulacao, agora = new Dat
   const referencias = await buscarReferencias(local.codigoIbge, pedido.subgrupo, hoje, distribuidora);
   const entrada = montarEntrada(pedido, referencias, hoje);
   const resultado = simular(entrada);
-  resultado.alertas.push(...alertasDasReferencias(referencias, hoje));
+  const { contaUsada, contaIgnorada } = tributosDoPedido(pedido, referencias);
+  const origem = origemDasPremissas(pedido, contaUsada);
+  resultado.alertas.push(...alertasDasReferencias(referencias, hoje, origem), ...alertasDasRespostas(pedido, contaIgnorada, pedido.consumoMedioKwh));
 
-  const formatada = formatarSimulacao(entrada, resultado, { local, pedido, tarifa: referencias.tarifa, distribuidora: distribuidora.sigla, versaoParametros: parametros.versao });
+  const formatada = formatarSimulacao(entrada, resultado, {
+    local, pedido, tarifa: referencias.tarifa, distribuidora: distribuidora.sigla, versaoParametros: parametros.versao, origem,
+    fatorDoTelhado: fatorDoTelhado(pedido.telhado), parcelaEstimada: estimarParcela(entrada.investimento, pedido.pagamentoPreferido, await listarFormasDePagamento(true)),
+  });
   const codigo = await inserirSimulacao({
     cep: pedido.cep, codigo_ibge: local.codigoIbge, tarifa_id: referencias.tarifa.id, irradiacao_id: referencias.irradiacao.id,
     versao_parametros: parametros.versao, entrada: { pedido: { ...pedido, distribuidora }, motor: entrada }, resultado: formatada,

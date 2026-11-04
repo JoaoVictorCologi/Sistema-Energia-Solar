@@ -3,6 +3,7 @@ import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { criarApp } from '../app.ts';
 import { buscarCodigoIbgeDoCep, salvarCepNoCache } from '../repositories/cepRepository.ts';
+import { buscarConfiguracaoComercial, listarFormasDePagamento } from '../repositories/configuracoesRepository.ts';
 import { listarDistribuidorasDaUf, listarDistribuidorasDoMunicipio } from '../repositories/distribuidorasRepository.ts';
 import { buscarUltimoIndicador } from '../repositories/indicadoresRepository.ts';
 import { buscarIrradiacaoDoMunicipio } from '../repositories/irradiacaoRepository.ts';
@@ -11,8 +12,10 @@ import { inserirSimulacao } from '../repositories/simulacoesRepository.ts';
 import { buscarTarifaVigente, buscarUltimaTarifaComFioB, listarCnpjsComTarifaDesde } from '../repositories/tarifasRepository.ts';
 import { parametros } from '../parametros/parametros.ts';
 import { simularEconomia } from '../services/simulacaoService.ts';
+import { CONFIGURACAO_INICIAL } from './apoio/comercialDeTeste.ts';
 
 vi.mock('../repositories/cepRepository.ts', () => ({ buscarCodigoIbgeDoCep: vi.fn(), salvarCepNoCache: vi.fn() }));
+vi.mock('../repositories/configuracoesRepository.ts', () => ({ buscarConfiguracaoComercial: vi.fn(), listarFormasDePagamento: vi.fn() }));
 vi.mock('../repositories/municipiosRepository.ts', () => ({ buscarMunicipio: vi.fn() }));
 vi.mock('../repositories/distribuidorasRepository.ts', () => ({ listarDistribuidorasDoMunicipio: vi.fn(), listarDistribuidorasDaUf: vi.fn() }));
 vi.mock('../repositories/tarifasRepository.ts', () => ({ buscarTarifaVigente: vi.fn(), buscarUltimaTarifaComFioB: vi.fn(), listarCnpjsComTarifaDesde: vi.fn() }));
@@ -59,6 +62,8 @@ beforeEach(() => {
   vi.mocked(buscarIrradiacaoDoMunicipio).mockResolvedValue({ id: 7, hspAnual: new Decimal('5.283'), hspMensal: HSP_MOCOCA.map((hsp) => new Decimal(hsp)) });
   vi.mocked(buscarUltimoIndicador).mockImplementation(async (serie) => ({ data: '2026-09-01', valor: new Decimal(serie === 432 ? '13.75' : '4.58') }));
   vi.mocked(inserirSimulacao).mockResolvedValue('a1f811c5-cd03-45d1-b9aa-f107b9eefb47');
+  vi.mocked(buscarConfiguracaoComercial).mockResolvedValue(CONFIGURACAO_INICIAL);
+  vi.mocked(listarFormasDePagamento).mockResolvedValue([]);
 });
 afterEach(() => vi.unstubAllGlobals());
 

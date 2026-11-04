@@ -7,7 +7,7 @@ import { fracao, kwh, reais, reaisPorKwh } from '../../motor/tipos.ts';
 const doze = <T>(valor: T): T[] => Array.from({ length: 12 }, () => valor);
 const duas = (valor: Decimal) => valor.toDecimalPlaces(2).toString();
 
-// Exemplo resolvido, começando em abril de 2026 (30 dias): o primeiro mês deve reproduzir a conta da especificação.
+// Exemplo resolvido, começando em abril de 2026 (30 dias): o primeiro mês deve reproduzir a conta feita à mão.
 function entradaDoExemplo(alteracoes: Partial<EntradaSimulacao> = {}): EntradaSimulacao {
   return {
     consumoMensal: doze(kwh(400)),
@@ -113,7 +113,7 @@ describe('simular', () => {
   });
 });
 
-// Propriedades da especificação, conferidas numa grade de entradas.
+// Propriedades que valem para qualquer entrada, conferidas numa grade de valores.
 describe('propriedades do faturamento', () => {
   const MES: EntradaMes = {
     mes: 0, consumo: kwh(400), geracao: kwh(450), simultaneidade: fracao('0.30'), consumoMinimo: kwh(30),

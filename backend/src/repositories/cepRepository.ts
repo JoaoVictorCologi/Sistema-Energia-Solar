@@ -1,3 +1,4 @@
+// Cache de CEP: guarda só o CEP e o município, nunca o endereço, que é dado pessoal.
 import { db } from '../database/conexao.ts';
 import type { CepCache } from '../tipos/tabelas.ts';
 

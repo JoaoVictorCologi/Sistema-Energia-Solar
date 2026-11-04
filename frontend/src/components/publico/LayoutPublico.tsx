@@ -3,7 +3,7 @@ import { Cabecalho } from './Cabecalho.tsx';
 import { Rodape } from './Rodape.tsx';
 import { WhatsAppFlutuante } from './WhatsAppFlutuante.tsx';
 
-// Cabeçalho e rodapé de todas as páginas públicas, inclusive as do Plano 6.
+// Estrutura comum das páginas públicas: cabeçalho, rodapé, atalho de WhatsApp e link para pular ao conteúdo.
 export function LayoutPublico() {
   return (
     <div className="flex min-h-svh flex-col wrap-anywhere">

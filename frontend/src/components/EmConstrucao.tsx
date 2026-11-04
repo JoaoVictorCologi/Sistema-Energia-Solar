@@ -1,8 +1,8 @@
 import { Construction } from 'lucide-react';
 import { useTituloDaPagina } from '../hooks/useTituloDaPagina.ts';
 
-// Tela provisória da área restrita: deixa a navegação pronta antes de a API existir.
-// Quando a API chegar, a rota passa a apontar para a tela de verdade.
+// Tela provisória de um módulo cuja API ainda não existe: mantém a navegação completa.
+// Quando a API estiver pronta, a rota passa a apontar para a tela definitiva.
 export function EmConstrucao({ titulo, origem, descricao }: { titulo: string; origem: string; descricao: string }) {
   useTituloDaPagina(`${titulo} — Solar Gestão`);
 

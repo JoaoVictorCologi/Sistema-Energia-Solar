@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router';
 import { linkDoWhatsApp } from '../../dados/empresa.ts';
 
-// Atalho do site anterior: só na página inicial e nas soluções. Some enquanto o formulário de contato
-// (#contato) está na tela, para não cobrir os campos. Verde oficial do WhatsApp, exceção aos tokens da marca.
+// Atalho de WhatsApp, exibido apenas na página inicial e nas soluções. Fica oculto enquanto o formulário de contato
+// (#contato) está visível, para não cobrir os campos. Usa o verde oficial do WhatsApp, exceção aos tokens da marca.
 export function WhatsAppFlutuante() {
   const { pathname } = useLocation();
   const [oculto, setOculto] = useState(false);

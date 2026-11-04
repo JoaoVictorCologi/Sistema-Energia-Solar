@@ -1,6 +1,6 @@
 import type { Knex } from 'knex';
 
-// Tabelas alimentadas pelos scripts de carga (IBGE, Atlas) e pelas importações da tarefa 6 (ANEEL, Banco Central).
+// Tabelas alimentadas pelos scripts de carga (IBGE, Atlas) e pelas importações agendadas (ANEEL, Banco Central).
 // O resto do sistema só lê. Valores de tarifa e irradiação em numeric: o repository converte para Decimal.
 
 function datasDeControle(knex: Knex, tabela: Knex.CreateTableBuilder): void {

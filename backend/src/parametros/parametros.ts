@@ -1,4 +1,5 @@
-// Premissas que não têm API (Lei 14.300, PR, custo de referência), versionadas no Git. Impostos: tributos.ts.
+// Premissas técnicas que não têm API (Lei 14.300, PR, telhado), versionadas no Git. Os impostos têm validação própria.
+// Valores comerciais (margem, instalação, custo de referência) ficam no banco, editados no painel.
 // O arquivo é validado ao carregar: um valor fora da faixa impede o backend de subir.
 import { Decimal } from 'decimal.js';
 import { z } from 'zod';
@@ -12,6 +13,9 @@ function decimal(minimo: string, maximo: string) {
 }
 
 const fracao = decimal('0', '1');
+const fatorDeTelhado = decimal('0.3', '1');
+const umaSimultaneidade = decimal('0.10', '0.70');
+const simultaneidadePorPerfil = z.object({ padrao: umaSimultaneidade, noite: umaSimultaneidade, equilibrado: umaSimultaneidade, dia: umaSimultaneidade });
 
 const esquemaParametros = z.object({
   versao: z.string().min(1),
@@ -25,8 +29,7 @@ const esquemaParametros = z.object({
   }),
   performanceRatio: decimal('0.70', '0.85'),
   degradacaoAnualPadrao: decimal('0.002', '0.01'),
-  simultaneidade: z.object({ B1: decimal('0.10', '0.70'), B2: decimal('0.10', '0.70'), B3: decimal('0.10', '0.70') }),
-  custoReferenciaPorKwp: decimal('0.01', '100000'),
+  simultaneidade: z.object({ B1: simultaneidadePorPerfil, B2: simultaneidadePorPerfil, B3: simultaneidadePorPerfil }),
   coberturaAlvo: decimal('0.5', '1.2'),
   horizonteAnos: z.number().int().min(1).max(40),
   validadeDosCreditosMeses: z.number().int().min(1).max(120),
@@ -34,7 +37,17 @@ const esquemaParametros = z.object({
   inversoresReferenciaKw: z.array(decimal('0.5', '1000')).min(1),
   operacaoManutencaoAnual: decimal('0', '0.03'),
   trocaDoInversor: z.object({ ano: z.number().int().min(10).max(15), fracaoDoInvestimento: decimal('0', '0.5') }),
-  proposta: z.object({ instalacaoPorKwp: decimal('0', '10000'), margem: decimal('0', '1'), validadeDias: z.number().int().min(1).max(90) }),
+  coberturaMaximaSobreConsumoAtual: decimal('1', '2'),
+  telhado: z.object({
+    areaPorModuloM2: decimal('1', '10'),
+    horasDeSol: z.object({ diaTodo: fatorDeTelhado, de6a8: fatorDeTelhado, de4a6: fatorDeTelhado, menosDe4: fatorDeTelhado }),
+    orientacao: z.object({
+      norte: fatorDeTelhado, nordeste: fatorDeTelhado, noroeste: fatorDeTelhado, leste: fatorDeTelhado, oeste: fatorDeTelhado,
+      sudeste: fatorDeTelhado, sudoeste: fatorDeTelhado, sul: fatorDeTelhado, plano: fatorDeTelhado,
+    }),
+    inclinacao: z.object({ plano: fatorDeTelhado, pouca: fatorDeTelhado, media: fatorDeTelhado, muita: fatorDeTelhado }),
+  }),
+  contaDeLuz: z.object({ aliquotaImplicitaMinima: fracao, aliquotaImplicitaMaxima: fracao, toleranciaDaTarifa: fracao }),
   fontes: z.record(z.string(), z.string()),
 });
 

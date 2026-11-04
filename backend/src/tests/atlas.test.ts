@@ -136,7 +136,7 @@ describe('carregarAtlas', () => {
     const resultado = await carregarAtlas(CSV_DE_EXEMPLO);
 
     expect(salvarIrradiacoes).toHaveBeenCalledWith(resultado.irradiacoes);
-    // Brasiléia (AC), Mococa, São José do Rio Pardo e Florínea (pela correção do correcoes-atlas.json do projeto).
+    // Brasiléia (AC), Mococa, São José do Rio Pardo e Florínea (pela tabela de correções do projeto).
     expect(resultado.irradiacoes).toHaveLength(4);
   });
 

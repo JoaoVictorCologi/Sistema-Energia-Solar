@@ -1,4 +1,4 @@
-// IBGE Localidades: lista de municípios do Brasil (cobertura nacional, Plano 5).
+// IBGE Localidades: lista de municípios do Brasil.
 import { z } from 'zod';
 import { buscarJson, ErroDeIntegracao } from './http.ts';
 

@@ -1,5 +1,5 @@
 // Roda uma importação na hora, como o botão "atualizar agora" do painel.
-// Uso: npm run importar -- aneel-tarifas | bcb-indicadores (sem tipo, lista os disponíveis)
+// Uso: npm run importar -- <tipo> (sem tipo, lista os disponíveis)
 import { ErroDeConfiguracao, obterEnv } from '../src/config/env.ts';
 
 try {

@@ -1,23 +1,23 @@
 /*
- * Identidade visual Don Energy — tokens extraídos do site institucional (Next.js).
- * Feito para Tailwind CSS 4: importar depois de `@import "tailwindcss";`.
- * Gera as classes bg-brand-*, text-brand-*, font-heading etc. e os componentes site-*.
- * Guia completo: docs/arquitetura/identidade-visual.md.
+ * Identidade visual da Don Energy para o Tailwind CSS 4.
+ * Deve ser importado depois de `@import "tailwindcss";`.
+ * Define os tokens que geram as classes bg-brand-*, text-brand-*, font-heading etc. e os componentes site-*.
+ * Guia de uso: frontend/docs/identidade-visual.md.
  */
 
 @theme {
-  /* Cores de marca (usadas no site). */
+  /* Cores de marca usadas na interface. */
   --color-brand-blue: #384c96;
   --color-brand-orange: #d88739;
   --color-brand-green: #94b94a;
   --color-brand-ink: #171f32;
 
-  /* Azul profundo de apoio: header sólido, rodapé e faixas de chamada. */
+  /* Azul profundo de apoio: cabeçalho sólido, rodapé e faixas de chamada. */
   --color-brand-deep: #182447;
   --color-brand-blue-header: #182447;
   --color-brand-soft: #f5f6fa;
 
-  /* Cores da arte original da logo; só para peças que reproduzem a logo. */
+  /* Cores da arte original da logo: apenas para peças que reproduzem a própria logo. */
   --color-logo-orange: #f68b39;
   --color-logo-blue: #1e55a6;
 
@@ -27,7 +27,7 @@
   --color-muted-foreground: #535c6d;
   --color-border: #d9dde6;
 
-  /* Sora e Inter carregadas do Google Fonts (ver README). */
+  /* Sora e Inter são carregadas do Google Fonts, no index.html. */
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-heading: "Sora", ui-sans-serif, system-ui, sans-serif;
 
@@ -38,7 +38,7 @@
 }
 
 :root {
-  /* Altura compartilhada entre header, primeira dobra e âncoras: 64 px; 72 px a partir de 768 px. */
+  /* Altura compartilhada entre cabeçalho, primeira dobra e âncoras: 64 px; 72 px a partir de 768 px. */
   --header-py: 0.5rem;
   --header-logo-size: 3rem;
   --header-height: calc(var(--header-py) * 2 + var(--header-logo-size));
@@ -73,10 +73,11 @@
   .site-eyebrow { @apply mb-5 text-xs font-semibold tracking-[0.13em] text-brand-blue uppercase; }
   .site-title { @apply max-w-3xl font-heading text-3xl leading-[1.22] font-medium tracking-[-0.035em] text-brand-blue md:text-[2.5rem]; }
   .site-link { @apply inline-flex min-h-11 items-center gap-4 text-sm font-semibold text-brand-blue underline-offset-8 hover:underline; }
-  /* Laranja com texto escuro: branco sobre o laranja não passa no contraste (2,8:1). */
+  /* Laranja com texto escuro: branco sobre o laranja não atinge o contraste mínimo (2,8:1). */
   .site-button { @apply inline-flex min-h-12 items-center justify-center gap-5 rounded-sm bg-brand-orange px-6 py-3 text-sm font-semibold text-brand-ink hover:bg-brand-orange/90; }
 }
 
+/* Respeita a preferência do usuário por menos movimento. */
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after { transition-duration: 0.01ms !important; }

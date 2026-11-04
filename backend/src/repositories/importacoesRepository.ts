@@ -1,3 +1,4 @@
+// Registro de cada execução das importações. A linha "executando" também serve de trava contra execuções simultâneas.
 import { db } from '../database/conexao.ts';
 import type { Importacao, StatusDaImportacao } from '../tipos/tabelas.ts';
 
@@ -33,6 +34,7 @@ export async function finalizarImportacao(id: number, fim: FimDaImportacao, agor
   return importacao;
 }
 
+// Só conta execução recente: uma antiga sem fim, de um servidor reiniciado no meio, não bloqueia para sempre.
 export async function existeImportacaoEmAndamento(tipo: string, iniciadaDepoisDe: Date): Promise<boolean> {
   const emAndamento = await db<Importacao>('importacao')
     .select('id')

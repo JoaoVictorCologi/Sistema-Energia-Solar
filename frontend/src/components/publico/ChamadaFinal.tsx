@@ -1,10 +1,11 @@
 import { Link } from 'react-router';
 
-// Faixa azul do fim das páginas. Leva ao formulário da página de contato (módulo site), já com o perfil escolhido.
+// Link para o formulário da página de contato, já com o perfil da solução marcado.
 export function linkDoContato(slugDaSolucao?: string): string {
   return '/contato' + (slugDaSolucao ? `?servico=${slugDaSolucao}` : '') + '#formulario-proposta';
 }
 
+// Faixa de chamada para o fim das páginas.
 export function ChamadaFinal({ titulo = 'Seu projeto começa com uma conversa.', slugDaSolucao }: { titulo?: string; slugDaSolucao?: string }) {
   return (
     <section className="bg-brand-deep py-16 text-white">

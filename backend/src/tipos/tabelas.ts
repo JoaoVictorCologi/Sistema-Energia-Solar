@@ -1,8 +1,8 @@
 // Uma interface por tabela do núcleo, com os tipos que o driver pg devolve.
 // Colunas numeric chegam como texto (`string`): o repository converte para Decimal antes de devolver.
-// Colunas date chegam como texto 'AAAA-MM-DD' (ver database/conexao.ts).
+// Colunas date chegam como texto 'AAAA-MM-DD', por configuração da conexão.
 
-export type Papel = 'admin' | 'usuario';
+export type Papel = 'admin' | 'gestor' | 'operador';
 
 export interface Usuario {
   id: number;
@@ -10,6 +10,7 @@ export interface Usuario {
   email: string;
   senha_hash: string;
   papel: Papel;
+  ativo: boolean;
   criado_em: Date;
   atualizado_em: Date;
 }
@@ -102,6 +103,9 @@ export interface CepCache {
   atualizado_em: Date;
 }
 
+export type ContatoPreferido = 'whatsapp' | 'telefone' | 'email';
+export type MelhorHorario = 'manha' | 'tarde' | 'noite';
+
 export interface Cliente {
   id: number;
   nome: string;
@@ -109,6 +113,13 @@ export interface Cliente {
   telefone: string;
   cep: string;
   aceite_em: Date;
+  logradouro: string | null;
+  numero: string | null;
+  complemento: string | null;
+  bairro: string | null;
+  contato_preferido: ContatoPreferido | null;
+  melhor_horario: MelhorHorario | null;
+  autoriza_calibracao: boolean;
   criado_em: Date;
   atualizado_em: Date;
 }
@@ -143,7 +154,7 @@ export interface Equipamento {
   atualizado_em: Date;
 }
 
-export type StatusDaProposta = 'enviada' | 'aceita' | 'recusada';
+export type StatusDaProposta = 'rascunho' | 'enviada' | 'aceita' | 'recusada';
 
 export interface Proposta {
   id: number;
@@ -153,6 +164,11 @@ export interface Proposta {
   investimento: string;
   valida_ate: string;
   snapshot: unknown;
+  versao: number;
+  proposta_raiz_id: number | null;
+  observacoes: string | null;
+  escolhas: unknown;
+  criada_por: number | null;
   criado_em: Date;
   atualizado_em: Date;
 }
@@ -164,6 +180,80 @@ export interface MunicipioDistribuidora {
   conjuntos: number;
   sugerida: boolean;
   importacao_id: number | null;
+  criado_em: Date;
+  atualizado_em: Date;
+}
+
+export interface ConfiguracaoComercial {
+  id: number;
+  margem: string;
+  instalacao_por_kwp: string;
+  custo_referencia_por_kwp: string;
+  validade_dias: number;
+  limite_desconto: string;
+  alterado_por: number | null;
+  criado_em: Date;
+  atualizado_em: Date;
+}
+
+export type TipoDePagamento = 'avista' | 'parcelado' | 'financiado';
+
+export interface FormaPagamento {
+  id: number;
+  tipo: TipoDePagamento;
+  nome: string;
+  taxa_mensal: string | null;
+  parcelas_minimas: number;
+  parcelas_maximas: number;
+  entrada_minima: string;
+  carencia_maxima_dias: number;
+  desconto_avista: string;
+  ativa: boolean;
+  alterado_por: number | null;
+  criado_em: Date;
+  atualizado_em: Date;
+}
+
+export type TipoDeAjuste = 'desconto' | 'acrescimo';
+export type ModoDoAjuste = 'valor' | 'percentual';
+
+export interface PropostaAjuste {
+  id: number;
+  proposta_id: number;
+  tipo: TipoDeAjuste;
+  descricao: string;
+  modo: ModoDoAjuste;
+  valor: string;
+  justificativa: string | null;
+  criado_por: number | null;
+  criado_em: Date;
+  atualizado_em: Date;
+}
+
+export interface PropostaCondicao {
+  id: number;
+  proposta_id: number;
+  forma_pagamento_id: number;
+  nome: string;
+  tipo: TipoDePagamento;
+  taxa_mensal: string;
+  desconto_avista: string;
+  entrada_minima: string;
+  entrada: string | null;
+  parcelas: number;
+  carencia_dias: number;
+  criado_por: number | null;
+  criado_em: Date;
+  atualizado_em: Date;
+}
+
+export interface PropostaEvento {
+  id: number;
+  proposta_id: number;
+  usuario_id: number | null;
+  tipo: string;
+  descricao: string;
+  justificativa: string | null;
   criado_em: Date;
   atualizado_em: Date;
 }

@@ -6,7 +6,7 @@ import { formatarNumero, formatarReais } from '../../utils/formatar.ts';
 import { classeDoCampo, MensagemDeErro } from '../formulario/Campos.tsx';
 import { Aviso, classeDoBotaoSecundario, EstadoDaCarga } from './Pecas.tsx';
 
-function descreverEquipamento(equipamento: Equipamento): string {
+export function descreverEquipamento(equipamento: Equipamento): string {
   const potencia = equipamento.tipo === 'modulo' ? `${formatarNumero(equipamento.potenciaW)} W` : `${formatarNumero(equipamento.potenciaW / 1000, 1)} kW`;
   return `${equipamento.fabricante} ${equipamento.modelo} — ${potencia} — ${formatarReais(equipamento.preco)}`;
 }
@@ -27,7 +27,8 @@ function Escolha({ id, rotulo, opcoes, valor, aoMudar, erro }: {
   );
 }
 
-// Só a escolha dos equipamentos vai para a API: quantidade, preço e premissas são calculados no backend.
+// Criação do orçamento: apenas a escolha dos equipamentos vai para a API; quantidade, preço e premissas são calculados no backend.
+// O orçamento nasce em rascunho, e o editor abre em seguida para os ajustes e as condições.
 export function GerarProposta({ codigoDaSimulacao }: { codigoDaSimulacao: string }) {
   const navegar = useNavigate();
   const catalogo = useCarregar(() => listarEquipamentos(), 'catalogo');
@@ -52,14 +53,14 @@ export function GerarProposta({ codigoDaSimulacao }: { codigoDaSimulacao: string
       const proposta = await gerarProposta({ simulacao: codigoDaSimulacao, moduloId: Number(moduloId), inversorId: Number(inversorId) });
       navegar(`/admin/propostas/${proposta.id}`);
     } catch (falha) {
-      setErro(falha instanceof ErroDaApi ? falha : new ErroDaApi(0, 'ERRO_INTERNO', 'Não foi possível gerar a proposta.'));
+      setErro(falha instanceof ErroDaApi ? falha : new ErroDaApi(0, 'ERRO_INTERNO', 'Não foi possível criar o orçamento.'));
       setGerando(false);
     }
   }
 
   if (catalogo.carregando || catalogo.erro) return <EstadoDaCarga carregando={catalogo.carregando} erro={catalogo.erro} aoTentarDeNovo={catalogo.recarregar} />;
   if (modulos.length === 0 || inversores.length === 0) {
-    return <p className="text-sm">Cadastre ao menos um módulo e um inversor ativos em <Link to="/admin/equipamentos" className="font-semibold underline underline-offset-4">Equipamentos</Link>.</p>;
+    return <p className="text-sm">O catálogo precisa de ao menos um módulo e um inversor ativos, em <Link to="/admin/equipamentos" className="font-semibold underline underline-offset-4">Equipamentos</Link> (tela da gestão).</p>;
   }
   return (
     <form onSubmit={gerar} noValidate className="flex flex-col gap-4">
@@ -68,8 +69,8 @@ export function GerarProposta({ codigoDaSimulacao }: { codigoDaSimulacao: string
         <Escolha id={`inversor-${codigoDaSimulacao}`} rotulo="Inversor" opcoes={inversores} valor={inversorId} aoMudar={setInversorId} erro={erro?.campos.inversorId} />
       </div>
       {erro?.message && Object.keys(erro.campos).length === 0 && <Aviso>{erro.message}</Aviso>}
-      <p className="text-sm text-muted-foreground">O preço sai do catálogo e da instalação por kWp, calculado no servidor. A proposta vale por 10 dias.</p>
-      <button type="submit" disabled={gerando} className={classeDoBotaoSecundario + ' self-start'}>{gerando ? 'Gerando…' : 'Gerar proposta'}</button>
+      <p className="text-sm text-muted-foreground">O preço sai do catálogo e das configurações comerciais, calculado no servidor. O orçamento abre em rascunho para você ajustar antes de enviar.</p>
+      <button type="submit" disabled={gerando} className={classeDoBotaoSecundario + ' self-start'}>{gerando ? 'Criando…' : 'Criar orçamento'}</button>
     </form>
   );
 }

@@ -8,7 +8,7 @@ import { useTituloDaPagina } from '../../hooks/useTituloDaPagina.ts';
 import { listarClientes } from '../../services/api.ts';
 import { formatarDiaDoInstante } from '../../utils/formatar.ts';
 
-// Busca e página ficam na URL: voltar do detalhe do cliente mantém a lista onde estava.
+// Busca e página ficam na URL: ao voltar do detalhe do cliente, a lista continua onde estava.
 export function Clientes() {
   useTituloDaPagina('Clientes — Solar Gestão');
   const [parametros, setParametros] = useSearchParams();

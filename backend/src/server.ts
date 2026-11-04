@@ -1,5 +1,7 @@
+// Ponto de entrada do processo: valida a configuração, sobe a API e liga o agendador de importações.
 import { ErroDeConfiguracao, obterEnv, type Env } from './config/env.ts';
 
+// Configuração errada encerra o processo com uma mensagem clara, em vez de falhar na primeira requisição.
 function validarConfiguracao(): Env {
   try {
     return obterEnv();
@@ -12,12 +14,12 @@ function validarConfiguracao(): Env {
 
 const env = validarConfiguracao();
 
-// Importado só depois da validação, porque a conexão com o banco lê o .env ao ser carregada.
+// Importados só depois da validação, porque a conexão com o banco lê o ambiente ao ser carregada.
 const { criarApp } = await import('./app.ts');
 const { iniciarAgendador } = await import('./jobs/agendador.ts');
 
 criarApp().listen(env.PORT, () => {
   console.log(`API do Solar Gestão em http://localhost:${env.PORT}`);
 });
-// Importações diárias (ANEEL, Banco Central e as dos módulos) às 06:00 de São Paulo.
+// Importações agendadas de dados (ANEEL, Banco Central e módulos), no fuso de São Paulo.
 iniciarAgendador();

@@ -1,6 +1,7 @@
 import { createContext, use, useEffect, useState, type ReactNode } from 'react';
 import * as api from '../services/api.ts';
 import type { Usuario } from '../services/api.ts';
+import { ehDaEquipe } from '../utils/papeis.ts';
 
 interface ValorDoAuth {
   usuario: Usuario | null;
@@ -11,9 +12,7 @@ interface ValorDoAuth {
 
 const AuthContext = createContext<ValorDoAuth | null>(null);
 
-export const MENSAGEM_SO_ADMIN = 'Acesso restrito ao administrador.';
-
-// O token fica no cookie HttpOnly; aqui guardamos só quem está logado, lido de /api/auth/me.
+// Sessão da área restrita. O token fica em cookie HttpOnly; aqui fica apenas o usuário logado, lido de /api/auth/me.
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [usuario, setUsuario] = useState<Usuario | null>(null);
   const [carregando, setCarregando] = useState(true);
@@ -27,10 +26,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function entrar(email: string, senha: string) {
     const logado = await api.entrar(email, senha);
-    // A área restrita é só do administrador: outro papel não fica com a sessão aberta.
-    if (logado.papel !== 'admin') {
+    // A área restrita é exclusiva da equipe: outro papel não mantém a sessão aberta.
+    if (!ehDaEquipe(logado.papel)) {
       await api.sair();
-      throw new api.ErroDaApi(403, 'SEM_PERMISSAO', MENSAGEM_SO_ADMIN);
+      throw new api.ErroDaApi(403, 'SEM_PERMISSAO', 'Acesso restrito à equipe.');
     }
     setUsuario(logado);
   }

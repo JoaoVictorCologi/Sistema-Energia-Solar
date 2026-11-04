@@ -3,6 +3,7 @@ import { GaleriaFotos } from '../../components/publico/GaleriaFotos.tsx';
 import { fotosDoAcervo } from '../../dados/fotos.ts';
 import { useTituloDaPagina } from '../../hooks/useTituloDaPagina.ts';
 
+// Galeria de fotos do acervo.
 export function Projetos() {
   useTituloDaPagina('Projetos — Don Energy');
 

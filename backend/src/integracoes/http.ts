@@ -1,5 +1,5 @@
 // Chamada HTTP comum a todas as integrações (IBGE, ViaCEP, ANEEL, Banco Central):
-// timeout em cada tentativa e no máximo 3 tentativas (AGENTS.md, regra obrigatória 10).
+// timeout em cada tentativa e no máximo 3 tentativas, para uma fonte lenta não travar a API nem ser sobrecarregada.
 
 export class ErroDeIntegracao extends Error {
   // Status HTTP da última resposta, quando houve resposta (o Banco Central usa 404 para "sem dados no período").
@@ -21,6 +21,7 @@ export interface OpcoesDaRequisicao {
 
 const TENTATIVAS_MAXIMAS = 3;
 
+// 429 e 5xx costumam ser passageiros; os demais 4xx se repetiriam igual.
 function valeAPenaRepetir(status: number): boolean {
   return status === 429 || status >= 500;
 }
@@ -40,6 +41,7 @@ async function tentarUmaVez(url: string, opcoes: OpcoesDaRequisicao): Promise<Re
   });
 }
 
+// A resposta é unknown de propósito: quem chama valida o formato com zod antes de usar.
 export async function buscarJson(url: string, opcoes: OpcoesDaRequisicao = {}): Promise<unknown> {
   const tentativas = Math.min(opcoes.tentativas ?? TENTATIVAS_MAXIMAS, TENTATIVAS_MAXIMAS);
   const espera = opcoes.esperaEntreTentativasMs ?? 1_000;

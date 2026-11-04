@@ -1,5 +1,5 @@
-// Textos das quatro soluções, herdados do site Don Energy (lib/perfis-solares.ts, servicos-detalhes.ts e apresentacao-solar.ts).
-// A foto é só de composição: a associação da instalação ao perfil não foi confirmada.
+// Textos das quatro soluções apresentadas no site.
+// A foto é apenas de composição: a associação da instalação ao perfil não foi confirmada.
 
 export interface Solucao {
   slug: string;

@@ -1,6 +1,6 @@
 import type { Knex } from 'knex';
 
-// Plano 5, tarefa 2: a distribuidora passa a ser identificada pelo CNPJ (a sigla muda depois de incorporações:
+// A distribuidora passa a ser identificada pelo CNPJ (a sigla muda depois de incorporações:
 // o mesmo CNPJ aparece como "CPFL JAGUARI" e como "CPFL Santa Cruz"), e cada município é ligado às suas.
 export async function up(knex: Knex): Promise<void> {
   await knex.schema.alterTable('distribuidora', (tabela) => {

@@ -1,5 +1,5 @@
-# Blueprint do Render (Plano 1, tarefa 16): banco PostgreSQL e um serviço web com a API e o site na mesma origem.
-# No painel do Render: New > Blueprint, escolha este repositório. Roteiro completo em docs/arquitetura/backend.md.
+# Blueprint do Render: banco PostgreSQL e um serviço web com a API e o site na mesma origem.
+# No painel do Render: New > Blueprint, escolha este repositório.
 databases:
   - name: solar-gestao-banco
     databaseName: solar_gestao

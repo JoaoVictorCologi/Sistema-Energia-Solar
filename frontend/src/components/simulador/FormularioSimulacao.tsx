@@ -1,30 +1,10 @@
-import { useEffect, useState, type FormEvent } from 'react';
-import { useNavigate } from 'react-router';
-import { consultarCep, ErroDaApi, simular, type LocalDoCep, type Subgrupo, type TipoLigacao } from '../../services/api.ts';
-import { CampoDeTexto, GrupoDeOpcoes } from '../formulario/Campos.tsx';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router';
+import { consultarCep, ErroDaApi, simular, type LocalDoCep } from '../../services/api.ts';
+import { conferirDados, DADOS_VAZIOS, montarPedido, somenteNumeros, type DadosDaSimulacao, type ErrosDaSimulacao, type EstadoDoResultado } from './dadosDaSimulacao.ts';
+import { SecaoDaConta, SecaoDoImovel, SecaoDoTelhado, SecaoDoUso, SecaoFinal } from './SecoesDoFormulario.tsx';
 
-const opcoesDeImovel: { valor: Subgrupo; rotulo: string }[] = [
-  { valor: 'B1', rotulo: 'Residencial' },
-  { valor: 'B3', rotulo: 'Comercial' },
-  { valor: 'B2', rotulo: 'Rural' },
-];
-
-const opcoesDeLigacao: { valor: TipoLigacao; rotulo: string }[] = [
-  { valor: 'monofasico', rotulo: 'Monofásica' },
-  { valor: 'bifasico', rotulo: 'Bifásica' },
-  { valor: 'trifasico', rotulo: 'Trifásica' },
-];
-
-type Erros = Partial<Record<'cep' | 'tipoLigacao' | 'consumoMedioKwh' | 'distribuidora', string>>;
-
-const somenteNumeros = (texto: string) => texto.replace(/\D/g, '');
-
-// "1.200" e "450,5" viram 1200 e 450.5; texto que não é número vira NaN.
-function lerConsumo(texto: string): number {
-  return Number(texto.trim().replace(/\./g, '').replace(',', '.'));
-}
-
-// Consulta o CEP assim que ele tem 8 números, para mostrar a cidade e avisar cedo se a região não é atendida.
+// Consulta o CEP ao completar 8 números, para mostrar a cidade e avisar cedo se a região não é atendida.
 function useConsultaDeCep(cep: string) {
   const [local, setLocal] = useState<LocalDoCep | null>(null);
   const [erro, setErro] = useState<string | undefined>();
@@ -40,109 +20,115 @@ function useConsultaDeCep(cep: string) {
       .then((encontrado) => { if (atual) setLocal(encontrado); })
       .catch((falha) => { if (atual) setErro(falha instanceof ErroDaApi ? falha.message : 'Não foi possível consultar o CEP.'); })
       .finally(() => { if (atual) setBuscando(false); });
-    // Digitou outro CEP antes da resposta: a resposta antiga é ignorada.
+    // Com outro CEP digitado antes da resposta, a resposta antiga é descartada.
     return () => { atual = false; };
   }, [cep]);
 
   return { local, erro, buscando };
 }
 
-// Distribuidora já marcada: a única do município ou a sugerida (a de mais conjuntos). Sem sugerida, o visitante escolhe.
-function distribuidoraInicial(local: LocalDoCep | null): string {
-  if (!local) return '';
+// Mantém a distribuidora escolhida se ela está entre as opções do CEP; caso contrário, usa a única do município ou a sugerida.
+function distribuidoraDoLocal(escolhida: string, local: LocalDoCep): string {
+  if (local.distribuidoras.some((opcao) => opcao.cnpj === escolhida)) return escolhida;
   if (local.distribuidoras.length === 1) return local.distribuidoras[0].cnpj;
   return local.distribuidoras.find((opcao) => opcao.sugerida)?.cnpj ?? '';
 }
 
-function validar(cep: string, local: LocalDoCep | null, distribuidora: string, tipoLigacao: string, consumo: number): Erros {
-  const erros: Erros = {};
-  if (cep.length !== 8) erros.cep = 'Informe o CEP com 8 números.';
-  else if (local && !local.atendido) erros.cep = 'Ainda não temos a tarifa da distribuidora desta cidade. Fale com a equipe pelo WhatsApp.';
-  if (local?.escolhaNecessaria && !distribuidora) erros.distribuidora = 'Escolha a distribuidora que aparece na sua conta de luz.';
-  if (!tipoLigacao) erros.tipoLigacao = 'Selecione o tipo de ligação.';
-  if (!Number.isFinite(consumo) || consumo < 1) erros.consumoMedioKwh = 'Informe o consumo médio em kWh (só números).';
-  else if (consumo > 20_000) erros.consumoMedioKwh = 'O simulador aceita até 20.000 kWh por mês.';
-  return erros;
+// Em um formulário longo, o envio com pendências precisa levar o usuário ao primeiro campo com problema.
+function levarAoPrimeiroErro(formulario: HTMLFormElement | null) {
+  const campo = formulario?.querySelector<HTMLElement>('[aria-invalid="true"], fieldset[aria-describedby^="erro-"]');
+  if (!campo) return;
+  campo.scrollIntoView({ block: 'center' });
+  (campo.matches('fieldset') ? campo.querySelector<HTMLElement>('input') : campo)?.focus({ preventScroll: true });
 }
 
-function descreverLocal(local: LocalDoCep): string {
-  const cidade = `${local.cidade} / ${local.uf}`;
-  if (!local.atendido) return `${cidade} — ainda sem tarifa de distribuidora`;
-  return local.distribuidoras.length === 1 ? `${cidade} · ${local.distribuidoras[0].sigla}` : cidade;
+// Erros dos 12 meses chegam por mês ("consumoMensalKwh.3"); a tela mostra um único aviso, abaixo da grade.
+function errosDaApi(campos: Record<string, string>): ErrosDaSimulacao {
+  return Object.fromEntries(Object.entries(campos).map(([campo, mensagem]) => [campo.startsWith('consumoMensalKwh') ? 'consumoMensalKwh' : campo, mensagem]));
 }
 
-// Município com mais de uma distribuidora (ou sem vínculo na ANEEL): o visitante confirma a da conta de luz.
-function EscolhaDeDistribuidora({ local, valor, aoMudar, erro }: { local: LocalDoCep; valor: string; aoMudar: (cnpj: string) => void; erro?: string }) {
-  const temSugerida = local.distribuidoras.some((opcao) => opcao.sugerida);
-  return (
-    <div>
-      <GrupoDeOpcoes nome="distribuidora" legenda="Distribuidora da sua conta de luz" valor={valor} aoMudar={aoMudar} erro={erro}
-        opcoes={local.distribuidoras.map((opcao) => ({ valor: opcao.cnpj, rotulo: opcao.sugerida ? `${opcao.sigla} (mais comum aqui)` : opcao.sigla }))} />
-      <p className="mt-2 text-sm text-muted-foreground">
-        {temSugerida
-          ? `${local.cidade} é atendida por mais de uma distribuidora. Deixamos marcada a mais comum; confira na sua conta.`
-          : `Não encontramos na ANEEL a distribuidora de ${local.cidade}: escolha a da sua conta entre as de ${local.uf}.`}
-      </p>
-    </div>
-  );
-}
-
+// Formulário único, antes do primeiro resultado: quem mora na casa fornece, a baixo custo, os dados que faltam ao cálculo.
 export function FormularioSimulacao() {
   const navegar = useNavigate();
-  const [cep, setCep] = useState('');
-  const [subgrupo, setSubgrupo] = useState<Subgrupo>('B1');
-  const [tipoLigacao, setTipoLigacao] = useState<TipoLigacao | ''>('');
-  const [consumo, setConsumo] = useState('');
-  const [erros, setErros] = useState<Erros>({});
-  const [erroGeral, setErroGeral] = useState<string | null>(null);
+  const local = useLocation();
+  const estado = local.state as EstadoDoResultado | null;
+  const [dados, setDados] = useState<DadosDaSimulacao>(estado?.dados ?? DADOS_VAZIOS);
+  // Depois da primeira tentativa, a conferência acompanha a digitação, e cada aviso some quando a resposta é dada.
+  const [tentouEnviar, setTentouEnviar] = useState(false);
+  const [errosDoServidor, setErrosDoServidor] = useState<ErrosDaSimulacao>({});
+  const [erroDoServidor, setErroDoServidor] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
-  const consultaDoCep = useConsultaDeCep(somenteNumeros(cep));
-  const [distribuidora, setDistribuidora] = useState('');
-  useEffect(() => setDistribuidora(distribuidoraInicial(consultaDoCep.local)), [consultaDoCep.local]);
+  const formulario = useRef<HTMLFormElement>(null);
+  const consulta = useConsultaDeCep(somenteNumeros(dados.cep));
 
-  async function enviar(evento: FormEvent<HTMLFormElement>) {
-    evento.preventDefault();
-    const consumoMedioKwh = lerConsumo(consumo);
-    const encontrados = validar(somenteNumeros(cep), consultaDoCep.local, distribuidora, tipoLigacao, consumoMedioKwh);
-    setErros(encontrados);
-    setErroGeral(null);
-    if (Object.keys(encontrados).length > 0 || !tipoLigacao) return;
+  const errosDaTela = tentouEnviar ? conferirDados(dados, consulta.local, consulta.erro) : {};
+  const faltaResposta = Object.keys(errosDaTela).length > 0;
+
+  function mudar(mudanca: Partial<DadosDaSimulacao>) {
+    setDados((atual) => ({ ...atual, ...mudanca }));
+    setErrosDoServidor({});
+    setErroDoServidor(null);
+  }
+
+  useEffect(() => {
+    if (!consulta.local) return;
+    const encontrado = consulta.local;
+    setDados((atual) => ({ ...atual, distribuidora: distribuidoraDoLocal(atual.distribuidora, encontrado) }));
+  }, [consulta.local]);
+
+  // "Simulador" no menu, com a tela já aberta, mantém a mesma rota: o formulário é reiniciado aqui.
+  useEffect(() => {
+    if (estado) return;
+    setDados(DADOS_VAZIOS);
+    setTentouEnviar(false);
+    setErrosDoServidor({});
+    setErroDoServidor(null);
+  }, [local.key]);
+
+  async function calcular() {
     setEnviando(true);
     try {
-      const simulacao = await simular({ cep: somenteNumeros(cep), tipoLigacao, subgrupo, consumoMedioKwh, distribuidora: distribuidora || undefined });
-      // O resultado vai no estado do histórico: sobrevive ao recarregar a página e ao botão voltar.
-      navegar('/simulador/resultado', { state: { simulacao } });
+      const simulacao = await simular(montarPedido(dados));
+      const novoEstado = { simulacao, dados } satisfies EstadoDoResultado;
+      // Grava as respostas nesta entrada do histórico, para o botão voltar do navegador não as perder.
+      await navegar('/simulador', { replace: true, state: novoEstado });
+      await navegar('/simulador/resultado', { state: novoEstado });
     } catch (falha) {
       const erro = falha instanceof ErroDaApi ? falha : new ErroDaApi(0, 'ERRO_INTERNO', 'Algo deu errado. Tente de novo.');
-      setErros(erro.campos as Erros);
-      if (Object.keys(erro.campos).length === 0) setErroGeral(erro.message);
+      const temCampos = Object.keys(erro.campos).length > 0;
+      setErrosDoServidor(errosDaApi(erro.campos));
+      setErroDoServidor(temCampos ? 'Confira os campos marcados.' : erro.message);
       setEnviando(false);
+      requestAnimationFrame(() => levarAoPrimeiroErro(formulario.current));
     }
   }
 
-  const { local } = consultaDoCep;
-  const ajudaDoCep = consultaDoCep.buscando ? 'Buscando a cidade…' : local ? descreverLocal(local) : undefined;
+  function enviar(evento: FormEvent<HTMLFormElement>) {
+    evento.preventDefault();
+    setTentouEnviar(true);
+    if (Object.keys(conferirDados(dados, consulta.local, consulta.erro)).length > 0) {
+      requestAnimationFrame(() => levarAoPrimeiroErro(formulario.current));
+      return;
+    }
+    void calcular();
+  }
 
+  const secao = { dados, mudar, erros: { ...errosDoServidor, ...errosDaTela } };
+  const aviso = faltaResposta ? 'Faltam algumas respostas: confira os campos marcados.' : erroDoServidor;
   return (
-    <form onSubmit={enviar} noValidate className="flex flex-col gap-6">
-      <CampoDeTexto id="cep" rotulo="CEP do imóvel" inputMode="numeric" autoComplete="postal-code" placeholder="00000-000" maxLength={9}
-        value={cep} onChange={(evento) => setCep(evento.target.value)} erro={erros.cep ?? consultaDoCep.erro}
-        ajuda={<span role="status">{ajudaDoCep}</span>} />
-      {local?.escolhaNecessaria && (
-        <EscolhaDeDistribuidora local={local} valor={distribuidora} aoMudar={setDistribuidora} erro={erros.distribuidora} />
-      )}
-      <GrupoDeOpcoes nome="subgrupo" legenda="Tipo de imóvel" opcoes={opcoesDeImovel} valor={subgrupo} aoMudar={setSubgrupo} />
-      <GrupoDeOpcoes nome="tipoLigacao" legenda="Tipo de ligação (está na conta de energia)" opcoes={opcoesDeLigacao}
-        valor={tipoLigacao} aoMudar={setTipoLigacao} erro={erros.tipoLigacao} />
-      <CampoDeTexto id="consumoMedioKwh" rotulo="Consumo médio por mês (kWh)" inputMode="decimal" placeholder="Ex.: 400"
-        value={consumo} onChange={(evento) => setConsumo(evento.target.value)} erro={erros.consumoMedioKwh}
-        ajuda="Some o consumo dos últimos 12 meses da conta e divida por 12. Se não tiver o histórico, use o da última conta." />
-      {erroGeral && (
-        <p role="alert" className="rounded-sm border border-red-700/30 bg-red-50 px-3 py-2 text-sm text-red-800">{erroGeral}</p>
-      )}
-      <button type="submit" disabled={enviando} className="site-button self-start disabled:opacity-70">
-        {enviando ? 'Calculando…' : 'Simular minha economia'} <span aria-hidden="true">↗</span>
-      </button>
+    <form ref={formulario} onSubmit={enviar} noValidate className="flex flex-col gap-6">
+      <SecaoDoImovel {...secao} consulta={consulta} />
+      <SecaoDaConta {...secao} />
+      <SecaoDoUso {...secao} />
+      <SecaoDoTelhado {...secao} />
+      <SecaoFinal {...secao} />
+      {aviso && <p role="alert" className="rounded-sm border border-red-700/30 bg-red-50 px-3 py-2 text-sm text-red-800">{aviso}</p>}
+      <div className="flex flex-wrap items-center gap-x-8 gap-y-3">
+        <button type="submit" disabled={enviando} className="site-button disabled:opacity-70">
+          {enviando ? 'Calculando…' : 'Ver minha economia'} <span aria-hidden="true">↗</span>
+        </button>
+        {estado?.simulacao && <Link to="/simulador/resultado" state={estado} className="site-link">Voltar ao resultado sem mudar nada</Link>}
+      </div>
     </form>
   );
 }

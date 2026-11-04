@@ -1,3 +1,4 @@
+// Catálogo de equipamentos usado nos orçamentos.
 import { ErroHttp } from '../middlewares/erros.ts';
 import {
   atualizarEquipamento, inserirEquipamento, listarEquipamentos, type DadosDoEquipamento, type EquipamentoDoCatalogo,

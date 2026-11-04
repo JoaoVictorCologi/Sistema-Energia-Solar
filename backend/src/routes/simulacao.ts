@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { criarSimulacao, esquemaSimulacao, obterCep } from '../controllers/simulacaoController.ts';
+import { listarFormasPublicas } from '../controllers/configuracoesController.ts';
 import { criarLimite } from '../middlewares/limites.ts';
 import { validar } from '../middlewares/validar.ts';
 
@@ -7,6 +8,7 @@ import { validar } from '../middlewares/validar.ts';
 export function criarRotasSimulacao(): Router {
   const rotas = Router();
   rotas.get('/cep/:cep', criarLimite({ janelaMs: 60_000, maximo: 30 }), obterCep);
+  rotas.get('/formas-pagamento', criarLimite({ janelaMs: 60_000, maximo: 30 }), listarFormasPublicas);
   rotas.post('/simulacoes', criarLimite({ janelaMs: 60_000, maximo: 30 }), validar(esquemaSimulacao), criarSimulacao);
   return rotas;
 }

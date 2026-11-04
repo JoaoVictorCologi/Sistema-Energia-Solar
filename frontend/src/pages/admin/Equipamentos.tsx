@@ -5,21 +5,18 @@ import { useCarregar } from '../../hooks/useCarregar.ts';
 import { useTituloDaPagina } from '../../hooks/useTituloDaPagina.ts';
 import { alterarEquipamento, cadastrarEquipamento, ErroDaApi, listarEquipamentos, type Equipamento, type TipoDeEquipamento } from '../../services/api.ts';
 import { formatarNumero, formatarPercentual } from '../../utils/formatar.ts';
-
-// "1.234,56" → 1234.56. É só a leitura do campo: o backend valida (até 2 casas) e guarda como Decimal.
-function lerNumero(texto: string): number {
-  return Number(texto.trim().replace(/\./g, '').replace(',', '.'));
-}
+import { lerNumero } from '../../utils/numeros.ts';
 
 const NOMES_DO_TIPO: Record<TipoDeEquipamento, string> = { modulo: 'Módulo', inversor: 'Inversor' };
 
+// Catálogo de módulos e inversores com preço, usado no cálculo dos orçamentos.
 export function Equipamentos() {
   useTituloDaPagina('Equipamentos — Solar Gestão');
   const carga = useCarregar(() => listarEquipamentos(), 'equipamentos');
 
   return (
     <>
-      <Titulo sobre="Catálogo com preço, usado nas propostas">Equipamentos</Titulo>
+      <Titulo sobre="Catálogo com preço, usado nos orçamentos">Equipamentos</Titulo>
       <div className="flex flex-col gap-8">
         <NovoEquipamento aoCadastrar={carga.recarregar} />
         <EstadoDaCarga carregando={carga.carregando && !carga.dados} erro={carga.erro} aoTentarDeNovo={carga.recarregar} />
@@ -31,7 +28,7 @@ export function Equipamentos() {
             <tbody>{carga.dados.map((equipamento) => <LinhaDoEquipamento key={equipamento.id} inicial={equipamento} />)}</tbody>
           </Tabela>
         ))}
-        <p className="text-sm text-muted-foreground">Preço novo vale só para as próximas propostas: as já emitidas guardam o preço do dia.</p>
+        <p className="text-sm text-muted-foreground">Preço novo vale para os próximos cálculos de rascunho: os orçamentos já enviados guardam o preço do dia.</p>
       </div>
     </>
   );
@@ -97,7 +94,7 @@ function NovoEquipamento({ aoCadastrar }: { aoCadastrar: () => void }) {
     evento.preventDefault();
     setSalvando(true);
     setErro(null);
-    // O inversor é informado em kW na tela e vai em W para a API, como o módulo.
+    // O inversor é informado em kW na tela e enviado em W à API, como o módulo.
     const potenciaW = tipo === 'modulo' ? lerNumero(campos.potencia) : lerNumero(campos.potencia) * 1000;
     try {
       await cadastrarEquipamento({

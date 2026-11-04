@@ -1,4 +1,4 @@
-// Seção 1 da especificação: tarifa com impostos e cobrança de Fio B.
+// Tarifa com impostos e cobrança de Fio B da Lei 14.300.
 import { Decimal } from 'decimal.js';
 import { reaisPorKwh, type Fracao, type ReaisPorKwh } from './tipos.ts';
 
