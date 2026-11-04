@@ -28,7 +28,7 @@ export class ErroDaApi extends Error {
 }
 
 // O cookie de sessão vai sozinho: em desenvolvimento o Vite repassa /api ao backend na mesma origem.
-async function requisitar<T>(caminho: string, opcoes: { metodo?: string; corpo?: unknown } = {}): Promise<T> {
+export async function requisitar<T>(caminho: string, opcoes: { metodo?: string; corpo?: unknown } = {}): Promise<T> {
   let resposta: Response;
   try {
     resposta = await fetch('/api' + caminho, {
