@@ -5,6 +5,8 @@ Backend em Node 22 + Express + TypeScript + Knex + PostgreSQL; frontend em React
 
 O site institucional anterior (Next.js) está na branch `legado/site-don-energy`.
 
+Clonou o repositório antes de 06/11/2026? Siga os passos de [ATUALIZACAO-DO-HISTORICO.md](ATUALIZACAO-DO-HISTORICO.md).
+
 ## Como rodar
 
 Pré-requisitos: Node 22.18 ou mais novo e PostgreSQL 16 ou mais novo.

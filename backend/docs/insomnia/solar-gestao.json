@@ -1,0 +1,1213 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2026-11-04T12:00:00.000Z",
+  "__export_source": "solar-gestao",
+  "resources": [
+    {
+      "_id": "__WORKSPACE_ID__",
+      "parentId": null,
+      "modified": 1793793600000,
+      "created": 1793793600000,
+      "name": "Solar Gestão API",
+      "description": "Fluxos completos do backend. Preencha email_admin e senha_admin no ambiente e rode em ordem.",
+      "scope": "collection",
+      "_type": "workspace"
+    },
+    {
+      "_id": "env_00000000000000000000000000000001",
+      "parentId": "__WORKSPACE_ID__",
+      "modified": 1793793600000,
+      "created": 1793793600000,
+      "name": "Base Environment",
+      "data": {
+        "base_url": "http://localhost:3333",
+        "email_admin": "",
+        "senha_admin": "",
+        "senha_teste": "senha-de-teste-123",
+        "execucao": "",
+        "token_admin": "",
+        "token_gestor": "",
+        "token_operador": "",
+        "id_gestor": "",
+        "id_operador": "",
+        "codigo_simulacao": "",
+        "id_cliente": "",
+        "id_modulo": "",
+        "id_inversor": "",
+        "id_forma_avista": "",
+        "id_proposta": "",
+        "valor_enviado": "",
+        "id_versao_2": ""
+      },
+      "dataPropertyOrder": null,
+      "color": null,
+      "isPrivate": false,
+      "metaSortKey": 1,
+      "_type": "environment"
+    },
+    {
+      "_id": "fld_00000000000000000000000000000001",
+      "parentId": "__WORKSPACE_ID__",
+      "modified": 1793793600000,
+      "created": 1793793600000,
+      "name": "1. Cliente pede uma proposta",
+      "description": "O caminho do visitante no site: do CEP ao pedido de proposta.",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 1000,
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_00000000000000000000000000000001",
+      "parentId": "fld_00000000000000000000000000000001",
+      "modified": 1793793600000,
+      "created": 1793793600000,
+      "url": "{{ _.base_url }}/api/health",
+      "name": "Conferir se a API está no ar",
+      "description": "Rota: GET /health\n\nSem sessão",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "preRequestScript": "insomnia.environment.set('execucao', String(Date.now()));",
+      "afterResponseScript": "insomnia.test(\"Status 200\", () => {\n  insomnia.expect(insomnia.response.code).to.equal(200);\n});",
+      "metaSortKey": 1,
+      "isPrivate": false,
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_00000000000000000000000000000002",
+      "parentId": "fld_00000000000000000000000000000001",
+      "modified": 1793793600000,
+      "created": 1793793600000,
+      "url": "{{ _.base_url }}/api/cep/13730250",
+      "name": "Consultar o CEP",
+      "description": "Rota: GET /cep/:cep\n\nSem sessão",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test(\"Status 200\", () => {\n  insomnia.expect(insomnia.response.code).to.equal(200);\n});\n\ninsomnia.test(\"Região atendida\", () => {\n  const corpo = insomnia.response.json();\n  insomnia.expect(corpo.atendido).to.equal(true);\n});",
+      "metaSortKey": 2,
+      "isPrivate": false,
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_00000000000000000000000000000003",
+      "parentId": "fld_00000000000000000000000000000001",
+      "modified": 1793793600000,
+      "created": 1793793600000,
+      "url": "{{ _.base_url }}/api/simulacoes",
+      "name": "Simular a economia",
+      "description": "Rota: POST /simulacoes\n\nSem sessão",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"cep\": \"13730250\",\n  \"tipoLigacao\": \"monofasico\",\n  \"consumoMedioKwh\": 400,\n  \"perfilDeConsumo\": \"noite\",\n  \"telhado\": {\n    \"horasDeSol\": \"diaTodo\",\n    \"orientacao\": \"norte\"\n  }\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test(\"Status 201\", () => {\n  insomnia.expect(insomnia.response.code).to.equal(201);\n});\n\ninsomnia.test(\"Calcula o sistema e a economia\", () => {\n  const corpo = insomnia.response.json();\n  insomnia.expect(corpo.simulacao.dimensionamento.numeroModulos).to.be.above(0);\n  insomnia.expect(corpo.simulacao.indicadores.economiaPrimeiroAno).to.be.above(0);\n});\n\nif (insomnia.response.code === 201) {\n  const corpo = insomnia.response.json();\n  insomnia.environment.set(\"codigo_simulacao\", corpo.simulacao.codigo);\n}",
+      "metaSortKey": 3,
+      "isPrivate": false,
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_00000000000000000000000000000004",
+      "parentId": "fld_00000000000000000000000000000001",
+      "modified": 1793793600000,
+      "created": 1793793600000,
+      "url": "{{ _.base_url }}/api/clientes",
+      "name": "Pedir a proposta",
+      "description": "Rota: POST /clientes\n\nSem sessão",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"simulacao\": \"{{ _.codigo_simulacao }}\",\n  \"nome\": \"Cliente de Teste\",\n  \"email\": \"cliente.{{ _.execucao }}@teste.local\",\n  \"telefone\": \"(19) 99999-0000\",\n  \"aceite\": true,\n  \"endereco\": {\n    \"logradouro\": \"Rua de Teste\",\n    \"numero\": \"100\"\n  }\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test(\"Status 201\", () => {\n  insomnia.expect(insomnia.response.code).to.equal(201);\n});",
+      "metaSortKey": 4,
+      "isPrivate": false,
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "fld_00000000000000000000000000000002",
+      "parentId": "__WORKSPACE_ID__",
+      "modified": 1793793600000,
+      "created": 1793793600000,
+      "name": "2. Equipe entra no sistema",
+      "description": "O admin cria o gestor, o gestor cria o operador, e cada um usa a própria sessão. Preencha email_admin e senha_admin no ambiente antes de rodar.",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 2000,
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_00000000000000000000000000000005",
+      "parentId": "fld_00000000000000000000000000000002",
+      "modified": 1793793600000,
+      "created": 1793793600000,
+      "url": "{{ _.base_url }}/api/auth/login",
+      "name": "Admin entra",
+      "description": "Rota: POST /auth/login\n\nSem sessão",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"{{ _.email_admin }}\",\n  \"senha\": \"{{ _.senha_admin }}\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test(\"Status 200\", () => {\n  insomnia.expect(insomnia.response.code).to.equal(200);\n});\n\nconst cabecalho = insomnia.response.headers.find((h) => String(h.key).toLowerCase() === 'set-cookie');\n\nif (cabecalho) insomnia.environment.set(\"token_admin\", /sessao=([^;]+)/.exec(cabecalho.value)[1]);",
+      "metaSortKey": 1,
+      "isPrivate": false,
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_00000000000000000000000000000006",
+      "parentId": "fld_00000000000000000000000000000002",
+      "modified": 1793793600000,
+      "created": 1793793600000,
+      "url": "{{ _.base_url }}/api/admin/usuarios",
+      "name": "Admin cria o gestor",
+      "description": "Rota: POST /admin/usuarios\n\nSessão: admin",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"Gestor de Teste\",\n  \"email\": \"gestor.{{ _.execucao }}@teste.local\",\n  \"senha\": \"{{ _.senha_teste }}\",\n  \"papel\": \"gestor\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Cookie",
+          "value": "sessao={{ _.token_admin }}"
+        }
+      ],
+      "authentication": {},
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test(\"Status 201\", () => {\n  insomnia.expect(insomnia.response.code).to.equal(201);\n});\n\nif (insomnia.response.code === 201) {\n  const corpo = insomnia.response.json();\n  insomnia.environment.set(\"id_gestor\", corpo.usuario.id);\n}",
+      "metaSortKey": 2,
+      "isPrivate": false,
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_00000000000000000000000000000007",
+      "parentId": "fld_00000000000000000000000000000002",
+      "modified": 1793793600000,
+      "created": 1793793600000,
+      "url": "{{ _.base_url }}/api/auth/login",
+      "name": "Gestor entra",
+      "description": "Rota: POST /auth/login\n\nSem sessão",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"gestor.{{ _.execucao }}@teste.local\",\n  \"senha\": \"{{ _.senha_teste }}\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test(\"Status 200\", () => {\n  insomnia.expect(insomnia.response.code).to.equal(200);\n});\n\nconst cabecalho = insomnia.response.headers.find((h) => String(h.key).toLowerCase() === 'set-cookie');\n\nif (cabecalho) insomnia.environment.set(\"token_gestor\", /sessao=([^;]+)/.exec(cabecalho.value)[1]);",
+      "metaSortKey": 3,
+      "isPrivate": false,
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_00000000000000000000000000000008",
+      "parentId": "fld_00000000000000000000000000000002",
+      "modified": 1793793600000,
+      "created": 1793793600000,
+      "url": "{{ _.base_url }}/api/admin/usuarios",
+      "name": "Gestor cria o operador",
+      "description": "Rota: POST /admin/usuarios\n\nSessão: gestor",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"Operador de Teste\",\n  \"email\": \"operador.{{ _.execucao }}@teste.local\",\n  \"senha\": \"{{ _.senha_teste }}\",\n  \"papel\": \"operador\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Cookie",
+          "value": "sessao={{ _.token_gestor }}"
+        }
+      ],
+      "authentication": {},
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test(\"Status 201\", () => {\n  insomnia.expect(insomnia.response.code).to.equal(201);\n});\n\nif (insomnia.response.code === 201) {\n  const corpo = insomnia.response.json();\n  insomnia.environment.set(\"id_operador\", corpo.usuario.id);\n}",
+      "metaSortKey": 4,
+      "isPrivate": false,
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_00000000000000000000000000000009",
+      "parentId": "fld_00000000000000000000000000000002",
+      "modified": 1793793600000,
+      "created": 1793793600000,
+      "url": "{{ _.base_url }}/api/auth/login",
+      "name": "Operador entra",
+      "description": "Rota: POST /auth/login\n\nSem sessão",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"operador.{{ _.execucao }}@teste.local\",\n  \"senha\": \"{{ _.senha_teste }}\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test(\"Status 200\", () => {\n  insomnia.expect(insomnia.response.code).to.equal(200);\n});\n\nconst cabecalho = insomnia.response.headers.find((h) => String(h.key).toLowerCase() === 'set-cookie');\n\nif (cabecalho) insomnia.environment.set(\"token_operador\", /sessao=([^;]+)/.exec(cabecalho.value)[1]);",
+      "metaSortKey": 5,
+      "isPrivate": false,
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_0000000000000000000000000000000a",
+      "parentId": "fld_00000000000000000000000000000002",
+      "modified": 1793793600000,
+      "created": 1793793600000,
+      "url": "{{ _.base_url }}/api/admin/usuarios",
+      "name": "Operador não administra usuários",
+      "description": "Rota: GET /admin/usuarios\n\nSessão: operador",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Cookie",
+          "value": "sessao={{ _.token_operador }}"
+        }
+      ],
+      "authentication": {},
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test(\"Status 403\", () => {\n  insomnia.expect(insomnia.response.code).to.equal(403);\n});",
+      "metaSortKey": 6,
+      "isPrivate": false,
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "fld_00000000000000000000000000000003",
+      "parentId": "__WORKSPACE_ID__",
+      "modified": 1793793600000,
+      "created": 1793793600000,
+      "name": "3. Gestão prepara a venda",
+      "description": "Cadastra os equipamentos e confere a forma de pagamento usada no orçamento.",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 3000,
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_0000000000000000000000000000000b",
+      "parentId": "fld_00000000000000000000000000000003",
+      "modified": 1793793600000,
+      "created": 1793793600000,
+      "url": "{{ _.base_url }}/api/admin/equipamentos",
+      "name": "Gestor cadastra o módulo",
+      "description": "Rota: POST /admin/equipamentos\n\nSessão: gestor",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"tipo\": \"modulo\",\n  \"fabricante\": \"Teste\",\n  \"modelo\": \"Módulo {{ _.execucao }}\",\n  \"potenciaW\": 550,\n  \"degradacaoAnual\": 0.005,\n  \"preco\": 700\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Cookie",
+          "value": "sessao={{ _.token_gestor }}"
+        }
+      ],
+      "authentication": {},
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test(\"Status 201\", () => {\n  insomnia.expect(insomnia.response.code).to.equal(201);\n});\n\nif (insomnia.response.code === 201) {\n  const corpo = insomnia.response.json();\n  insomnia.environment.set(\"id_modulo\", corpo.equipamento.id);\n}",
+      "metaSortKey": 1,
+      "isPrivate": false,
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_0000000000000000000000000000000c",
+      "parentId": "fld_00000000000000000000000000000003",
+      "modified": 1793793600000,
+      "created": 1793793600000,
+      "url": "{{ _.base_url }}/api/admin/equipamentos",
+      "name": "Gestor cadastra o inversor",
+      "description": "Rota: POST /admin/equipamentos\n\nSessão: gestor",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"tipo\": \"inversor\",\n  \"fabricante\": \"Teste\",\n  \"modelo\": \"Inversor {{ _.execucao }}\",\n  \"potenciaW\": 3000,\n  \"preco\": 3500\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Cookie",
+          "value": "sessao={{ _.token_gestor }}"
+        }
+      ],
+      "authentication": {},
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test(\"Status 201\", () => {\n  insomnia.expect(insomnia.response.code).to.equal(201);\n});\n\nif (insomnia.response.code === 201) {\n  const corpo = insomnia.response.json();\n  insomnia.environment.set(\"id_inversor\", corpo.equipamento.id);\n}",
+      "metaSortKey": 2,
+      "isPrivate": false,
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_0000000000000000000000000000000d",
+      "parentId": "fld_00000000000000000000000000000003",
+      "modified": 1793793600000,
+      "created": 1793793600000,
+      "url": "{{ _.base_url }}/api/admin/formas-pagamento",
+      "name": "Gestor consulta as formas de pagamento",
+      "description": "Rota: GET /admin/formas-pagamento\n\nSessão: gestor",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Cookie",
+          "value": "sessao={{ _.token_gestor }}"
+        }
+      ],
+      "authentication": {},
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test(\"Status 200\", () => {\n  insomnia.expect(insomnia.response.code).to.equal(200);\n});\n\ninsomnia.test(\"Tem forma à vista ativa\", () => {\n  const corpo = insomnia.response.json();\n  insomnia.expect(corpo.formas.find((f) => f.tipo === 'avista' && f.ativa)).to.be.an('object');\n});\n\nif (insomnia.response.code === 200) {\n  const corpo = insomnia.response.json();\n  insomnia.environment.set(\"id_forma_avista\", corpo.formas.find((f) => f.tipo === 'avista' && f.ativa).id);\n}",
+      "metaSortKey": 3,
+      "isPrivate": false,
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "fld_00000000000000000000000000000004",
+      "parentId": "__WORKSPACE_ID__",
+      "modified": 1793793600000,
+      "created": 1793793600000,
+      "name": "4. Orçamento do pedido ao aceite",
+      "description": "O operador atende o pedido do fluxo 1 até o cliente aceitar.",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 4000,
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_0000000000000000000000000000000e",
+      "parentId": "fld_00000000000000000000000000000004",
+      "modified": 1793793600000,
+      "created": 1793793600000,
+      "url": "{{ _.base_url }}/api/admin/painel",
+      "name": "Painel mostra o pedido novo",
+      "description": "Rota: GET /admin/painel\n\nSessão: operador",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Cookie",
+          "value": "sessao={{ _.token_operador }}"
+        }
+      ],
+      "authentication": {},
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test(\"Status 200\", () => {\n  insomnia.expect(insomnia.response.code).to.equal(200);\n});\n\ninsomnia.test(\"Há pedido para atender\", () => {\n  const corpo = insomnia.response.json();\n  insomnia.expect(corpo.painel.pedidosNovos).to.be.at.least(1);\n});",
+      "metaSortKey": 1,
+      "isPrivate": false,
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_0000000000000000000000000000000f",
+      "parentId": "fld_00000000000000000000000000000004",
+      "modified": 1793793600000,
+      "created": 1793793600000,
+      "url": "{{ _.base_url }}/api/admin/clientes?busca=cliente.{{ _.execucao }}",
+      "name": "Encontrar o cliente",
+      "description": "Rota: GET /admin/clientes\n\nSessão: operador",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Cookie",
+          "value": "sessao={{ _.token_operador }}"
+        }
+      ],
+      "authentication": {},
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test(\"Status 200\", () => {\n  insomnia.expect(insomnia.response.code).to.equal(200);\n});\n\ninsomnia.test(\"Acha um cliente\", () => {\n  const corpo = insomnia.response.json();\n  insomnia.expect(corpo.total).to.equal(1);\n});\n\nif (insomnia.response.code === 200) {\n  const corpo = insomnia.response.json();\n  insomnia.environment.set(\"id_cliente\", corpo.clientes[0].id);\n}",
+      "metaSortKey": 2,
+      "isPrivate": false,
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_00000000000000000000000000000010",
+      "parentId": "fld_00000000000000000000000000000004",
+      "modified": 1793793600000,
+      "created": 1793793600000,
+      "url": "{{ _.base_url }}/api/admin/clientes/{{ _.id_cliente }}",
+      "name": "Abrir o cliente e as respostas",
+      "description": "Rota: GET /admin/clientes/:id\n\nSessão: operador",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Cookie",
+          "value": "sessao={{ _.token_operador }}"
+        }
+      ],
+      "authentication": {},
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test(\"Status 200\", () => {\n  insomnia.expect(insomnia.response.code).to.equal(200);\n});\n\ninsomnia.test(\"Traz a simulação com as respostas\", () => {\n  const corpo = insomnia.response.json();\n  insomnia.expect(corpo.simulacoes[0].respostas.perfilDeConsumo).to.equal('noite');\n});",
+      "metaSortKey": 3,
+      "isPrivate": false,
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_00000000000000000000000000000011",
+      "parentId": "fld_00000000000000000000000000000004",
+      "modified": 1793793600000,
+      "created": 1793793600000,
+      "url": "{{ _.base_url }}/api/admin/propostas",
+      "name": "Criar o rascunho",
+      "description": "Rota: POST /admin/propostas\n\nSessão: operador",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"simulacao\": \"{{ _.codigo_simulacao }}\",\n  \"moduloId\": {{ _.id_modulo }},\n  \"inversorId\": {{ _.id_inversor }}\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Cookie",
+          "value": "sessao={{ _.token_operador }}"
+        }
+      ],
+      "authentication": {},
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test(\"Status 201\", () => {\n  insomnia.expect(insomnia.response.code).to.equal(201);\n});\n\ninsomnia.test(\"Nasce em rascunho\", () => {\n  const corpo = insomnia.response.json();\n  insomnia.expect(corpo.proposta.status).to.equal('rascunho');\n});\n\nif (insomnia.response.code === 201) {\n  const corpo = insomnia.response.json();\n  insomnia.environment.set(\"id_proposta\", corpo.proposta.id);\n}",
+      "metaSortKey": 4,
+      "isPrivate": false,
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_00000000000000000000000000000012",
+      "parentId": "fld_00000000000000000000000000000004",
+      "modified": 1793793600000,
+      "created": 1793793600000,
+      "url": "{{ _.base_url }}/api/admin/propostas/{{ _.id_proposta }}/ajustes",
+      "name": "Dar desconto de 5%",
+      "description": "Rota: POST /admin/propostas/:id/ajustes\n\nSessão: operador",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"tipo\": \"desconto\",\n  \"descricao\": \"Desconto de fechamento\",\n  \"modo\": \"percentual\",\n  \"valor\": 0.05\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Cookie",
+          "value": "sessao={{ _.token_operador }}"
+        }
+      ],
+      "authentication": {},
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test(\"Status 201\", () => {\n  insomnia.expect(insomnia.response.code).to.equal(201);\n});\n\ninsomnia.test(\"Valor final menor que o calculado\", () => {\n  const corpo = insomnia.response.json();\n  insomnia.expect(corpo.proposta.precos.investimento).to.be.below(corpo.proposta.precos.calculado);\n});",
+      "metaSortKey": 5,
+      "isPrivate": false,
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_00000000000000000000000000000013",
+      "parentId": "fld_00000000000000000000000000000004",
+      "modified": 1793793600000,
+      "created": 1793793600000,
+      "url": "{{ _.base_url }}/api/admin/propostas/{{ _.id_proposta }}/condicoes",
+      "name": "Incluir pagamento à vista",
+      "description": "Rota: POST /admin/propostas/:id/condicoes\n\nSessão: operador",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"formaPagamentoId\": {{ _.id_forma_avista }}\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Cookie",
+          "value": "sessao={{ _.token_operador }}"
+        }
+      ],
+      "authentication": {},
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test(\"Status 201\", () => {\n  insomnia.expect(insomnia.response.code).to.equal(201);\n});",
+      "metaSortKey": 6,
+      "isPrivate": false,
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_00000000000000000000000000000014",
+      "parentId": "fld_00000000000000000000000000000004",
+      "modified": 1793793600000,
+      "created": 1793793600000,
+      "url": "{{ _.base_url }}/api/admin/propostas/{{ _.id_proposta }}/enviar",
+      "name": "Enviar ao cliente",
+      "description": "Rota: POST /admin/propostas/:id/enviar\n\nSessão: operador",
+      "method": "POST",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Cookie",
+          "value": "sessao={{ _.token_operador }}"
+        }
+      ],
+      "authentication": {},
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test(\"Status 200\", () => {\n  insomnia.expect(insomnia.response.code).to.equal(200);\n});\n\ninsomnia.test(\"Status enviada\", () => {\n  const corpo = insomnia.response.json();\n  insomnia.expect(corpo.proposta.status).to.equal('enviada');\n});\n\nif (insomnia.response.code === 200) {\n  const corpo = insomnia.response.json();\n  insomnia.environment.set(\"valor_enviado\", corpo.proposta.investimento);\n}",
+      "metaSortKey": 7,
+      "isPrivate": false,
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_00000000000000000000000000000015",
+      "parentId": "fld_00000000000000000000000000000004",
+      "modified": 1793793600000,
+      "created": 1793793600000,
+      "url": "{{ _.base_url }}/api/admin/propostas/{{ _.id_proposta }}",
+      "name": "Enviado não pode mais ser editado",
+      "description": "Rota: PATCH /admin/propostas/:id\n\nSessão: operador",
+      "method": "PATCH",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"observacoes\": \"Tentativa de alterar.\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Cookie",
+          "value": "sessao={{ _.token_operador }}"
+        }
+      ],
+      "authentication": {},
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test(\"Status 409\", () => {\n  insomnia.expect(insomnia.response.code).to.equal(409);\n});\n\ninsomnia.test(\"Erro PROPOSTA_CONGELADA\", () => {\n  const corpo = insomnia.response.json();\n  insomnia.expect(corpo.error.code).to.equal(\"PROPOSTA_CONGELADA\");\n});",
+      "metaSortKey": 8,
+      "isPrivate": false,
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_00000000000000000000000000000016",
+      "parentId": "fld_00000000000000000000000000000004",
+      "modified": 1793793600000,
+      "created": 1793793600000,
+      "url": "{{ _.base_url }}/api/admin/propostas/{{ _.id_proposta }}/status",
+      "name": "Cliente aceita",
+      "description": "Rota: PATCH /admin/propostas/:id/status\n\nSessão: operador",
+      "method": "PATCH",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"status\": \"aceita\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Cookie",
+          "value": "sessao={{ _.token_operador }}"
+        }
+      ],
+      "authentication": {},
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test(\"Status 200\", () => {\n  insomnia.expect(insomnia.response.code).to.equal(200);\n});\n\ninsomnia.test(\"Status aceita, com o mesmo valor\", () => {\n  const corpo = insomnia.response.json();\n  insomnia.expect(corpo.proposta.status).to.equal('aceita');\n  insomnia.expect(corpo.proposta.investimento).to.equal(insomnia.environment.get('valor_enviado'));\n});",
+      "metaSortKey": 9,
+      "isPrivate": false,
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_00000000000000000000000000000017",
+      "parentId": "fld_00000000000000000000000000000004",
+      "modified": 1793793600000,
+      "created": 1793793600000,
+      "url": "{{ _.base_url }}/api/admin/painel",
+      "name": "Painel soma o valor aceito",
+      "description": "Rota: GET /admin/painel\n\nSessão: operador",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Cookie",
+          "value": "sessao={{ _.token_operador }}"
+        }
+      ],
+      "authentication": {},
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test(\"Status 200\", () => {\n  insomnia.expect(insomnia.response.code).to.equal(200);\n});\n\ninsomnia.test(\"Valor aceito no mês\", () => {\n  const corpo = insomnia.response.json();\n  insomnia.expect(corpo.painel.valorAceitoNoMes).to.be.above(0);\n});",
+      "metaSortKey": 10,
+      "isPrivate": false,
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "fld_00000000000000000000000000000005",
+      "parentId": "__WORKSPACE_ID__",
+      "modified": 1793793600000,
+      "created": 1793793600000,
+      "name": "5. Nova versão do orçamento",
+      "description": "Refaz um orçamento enviado sem alterar o original.",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 5000,
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_00000000000000000000000000000018",
+      "parentId": "fld_00000000000000000000000000000005",
+      "modified": 1793793600000,
+      "created": 1793793600000,
+      "url": "{{ _.base_url }}/api/admin/propostas/{{ _.id_proposta }}/nova-versao",
+      "name": "Criar a versão 2",
+      "description": "Rota: POST /admin/propostas/:id/nova-versao\n\nSessão: operador",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Cookie",
+          "value": "sessao={{ _.token_operador }}"
+        }
+      ],
+      "authentication": {},
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test(\"Status 201\", () => {\n  insomnia.expect(insomnia.response.code).to.equal(201);\n});\n\ninsomnia.test(\"Versão 2 em rascunho\", () => {\n  const corpo = insomnia.response.json();\n  insomnia.expect(corpo.proposta.versao).to.equal(2);\n  insomnia.expect(corpo.proposta.status).to.equal('rascunho');\n});\n\nif (insomnia.response.code === 201) {\n  const corpo = insomnia.response.json();\n  insomnia.environment.set(\"id_versao_2\", corpo.proposta.id);\n}",
+      "metaSortKey": 1,
+      "isPrivate": false,
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_00000000000000000000000000000019",
+      "parentId": "fld_00000000000000000000000000000005",
+      "modified": 1793793600000,
+      "created": 1793793600000,
+      "url": "{{ _.base_url }}/api/admin/propostas/{{ _.id_proposta }}",
+      "name": "O original continua aceito",
+      "description": "Rota: GET /admin/propostas/:id\n\nSessão: operador",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Cookie",
+          "value": "sessao={{ _.token_operador }}"
+        }
+      ],
+      "authentication": {},
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test(\"Status 200\", () => {\n  insomnia.expect(insomnia.response.code).to.equal(200);\n});\n\ninsomnia.test(\"Mesmo status e duas versões\", () => {\n  const corpo = insomnia.response.json();\n  insomnia.expect(corpo.proposta.status).to.equal('aceita');\n  insomnia.expect(corpo.proposta.versoes).to.have.lengthOf(2);\n});",
+      "metaSortKey": 2,
+      "isPrivate": false,
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_0000000000000000000000000000001a",
+      "parentId": "fld_00000000000000000000000000000005",
+      "modified": 1793793600000,
+      "created": 1793793600000,
+      "url": "{{ _.base_url }}/api/admin/propostas/{{ _.id_versao_2 }}",
+      "name": "Descartar a versão 2",
+      "description": "Rota: DELETE /admin/propostas/:id\n\nSessão: operador",
+      "method": "DELETE",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Cookie",
+          "value": "sessao={{ _.token_operador }}"
+        }
+      ],
+      "authentication": {},
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test(\"Status 204\", () => {\n  insomnia.expect(insomnia.response.code).to.equal(204);\n});",
+      "metaSortKey": 3,
+      "isPrivate": false,
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "fld_00000000000000000000000000000006",
+      "parentId": "__WORKSPACE_ID__",
+      "modified": 1793793600000,
+      "created": 1793793600000,
+      "name": "6. Atualização dos dados",
+      "description": "Só a conta admin vê e roda as importações. A execução consulta o Banco Central.",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 6000,
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_0000000000000000000000000000001b",
+      "parentId": "fld_00000000000000000000000000000006",
+      "modified": 1793793600000,
+      "created": 1793793600000,
+      "url": "{{ _.base_url }}/api/admin/importacoes",
+      "name": "Admin confere as importações",
+      "description": "Rota: GET /admin/importacoes\n\nSessão: admin",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Cookie",
+          "value": "sessao={{ _.token_admin }}"
+        }
+      ],
+      "authentication": {},
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test(\"Status 200\", () => {\n  insomnia.expect(insomnia.response.code).to.equal(200);\n});\n\ninsomnia.test(\"Lista as três importações\", () => {\n  const corpo = insomnia.response.json();\n  insomnia.expect(corpo.importacoes).to.have.lengthOf.at.least(3);\n});",
+      "metaSortKey": 1,
+      "isPrivate": false,
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_0000000000000000000000000000001c",
+      "parentId": "fld_00000000000000000000000000000006",
+      "modified": 1793793600000,
+      "created": 1793793600000,
+      "url": "{{ _.base_url }}/api/admin/importacoes/bcb-indicadores",
+      "name": "Admin atualiza os indicadores",
+      "description": "Rota: POST /admin/importacoes/:tipo\n\nSessão: admin",
+      "method": "POST",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Cookie",
+          "value": "sessao={{ _.token_admin }}"
+        }
+      ],
+      "authentication": {},
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test(\"Status 200\", () => {\n  insomnia.expect(insomnia.response.code).to.equal(200);\n});\n\ninsomnia.test(\"Importação registrada\", () => {\n  const corpo = insomnia.response.json();\n  insomnia.expect(corpo.importacao.tipo).to.equal('bcb-indicadores');\n});",
+      "metaSortKey": 2,
+      "isPrivate": false,
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "fld_00000000000000000000000000000007",
+      "parentId": "__WORKSPACE_ID__",
+      "modified": 1793793600000,
+      "created": 1793793600000,
+      "name": "7. Limpeza",
+      "description": "Desativa o que foi criado. Cliente, simulação e orçamento continuam no banco, porque não há rota para apagá-los.",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 7000,
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_0000000000000000000000000000001d",
+      "parentId": "fld_00000000000000000000000000000007",
+      "modified": 1793793600000,
+      "created": 1793793600000,
+      "url": "{{ _.base_url }}/api/admin/equipamentos/{{ _.id_modulo }}",
+      "name": "Desativar o módulo",
+      "description": "Rota: PATCH /admin/equipamentos/:id\n\nSessão: gestor",
+      "method": "PATCH",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"ativo\": false\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Cookie",
+          "value": "sessao={{ _.token_gestor }}"
+        }
+      ],
+      "authentication": {},
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test(\"Status 200\", () => {\n  insomnia.expect(insomnia.response.code).to.equal(200);\n});",
+      "metaSortKey": 1,
+      "isPrivate": false,
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_0000000000000000000000000000001e",
+      "parentId": "fld_00000000000000000000000000000007",
+      "modified": 1793793600000,
+      "created": 1793793600000,
+      "url": "{{ _.base_url }}/api/admin/equipamentos/{{ _.id_inversor }}",
+      "name": "Desativar o inversor",
+      "description": "Rota: PATCH /admin/equipamentos/:id\n\nSessão: gestor",
+      "method": "PATCH",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"ativo\": false\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Cookie",
+          "value": "sessao={{ _.token_gestor }}"
+        }
+      ],
+      "authentication": {},
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test(\"Status 200\", () => {\n  insomnia.expect(insomnia.response.code).to.equal(200);\n});",
+      "metaSortKey": 2,
+      "isPrivate": false,
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_0000000000000000000000000000001f",
+      "parentId": "fld_00000000000000000000000000000007",
+      "modified": 1793793600000,
+      "created": 1793793600000,
+      "url": "{{ _.base_url }}/api/admin/usuarios/{{ _.id_operador }}",
+      "name": "Excluir o operador",
+      "description": "Rota: DELETE /admin/usuarios/:id\n\nSessão: admin",
+      "method": "DELETE",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Cookie",
+          "value": "sessao={{ _.token_admin }}"
+        }
+      ],
+      "authentication": {},
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test(\"Status 204\", () => {\n  insomnia.expect(insomnia.response.code).to.equal(204);\n});",
+      "metaSortKey": 3,
+      "isPrivate": false,
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_00000000000000000000000000000020",
+      "parentId": "fld_00000000000000000000000000000007",
+      "modified": 1793793600000,
+      "created": 1793793600000,
+      "url": "{{ _.base_url }}/api/auth/me",
+      "name": "Operador excluído perde a sessão",
+      "description": "Rota: GET /auth/me\n\nSessão: operador",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Cookie",
+          "value": "sessao={{ _.token_operador }}"
+        }
+      ],
+      "authentication": {},
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test(\"Status 401\", () => {\n  insomnia.expect(insomnia.response.code).to.equal(401);\n});",
+      "metaSortKey": 4,
+      "isPrivate": false,
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_00000000000000000000000000000021",
+      "parentId": "fld_00000000000000000000000000000007",
+      "modified": 1793793600000,
+      "created": 1793793600000,
+      "url": "{{ _.base_url }}/api/admin/usuarios/{{ _.id_gestor }}",
+      "name": "Excluir o gestor",
+      "description": "Rota: DELETE /admin/usuarios/:id\n\nSessão: admin",
+      "method": "DELETE",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Cookie",
+          "value": "sessao={{ _.token_admin }}"
+        }
+      ],
+      "authentication": {},
+      "preRequestScript": "",
+      "afterResponseScript": "insomnia.test(\"Status 204\", () => {\n  insomnia.expect(insomnia.response.code).to.equal(204);\n});",
+      "metaSortKey": 5,
+      "isPrivate": false,
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    }
+  ]
+}
